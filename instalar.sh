@@ -26,9 +26,9 @@ while true; do
     HORA_ATUAL=$(date +%H:%M:%S)
     
     echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
-    echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
+    echo -e "${AZUL}│${SEM_COR}           ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}           ${AZUL}│${SEM_COR}"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-    echo -e "${AZUL}│ ${VERDE}SISTEMA${SEM_COR}             ${VERDE}MEMORIA RAM${SEM_COR}           ${VERDE}PROCESSADOR${SEM_COR}  ${AZUL}│${SEM_COR}"
+    echo -e "${AZUL}│ ${VERDE}SISTEMA${SEM_COR}             ${VERDE}MEMORIA RAM${SEM_COR}            ${VERDE}PROCESSADOR${SEM_COR}  ${AZUL}│${SEM_COR}"
     printf "${AZUL}│ ${VERMELHO}OS: ${BRANCO}%-15s${VERMELHO}Total: ${BRANCO}%-14s${VERMELHO}Nucleos: ${BRANCO}%-5s${AZUL}│\n" "$OS_VERSAO $OS_RELEASE" "$RAM_TOTAL" "$NUCLEOS"
     printf "${AZUL}│ ${VERMELHO}Hora: ${BRANCO}%-13s${VERMELHO}Em Uso: ${BRANCO}%-13s${VERMELHO}Em Uso: ${BRANCO}%-6s${AZUL}│\n" "$HORA_ATUAL" "$RAM_USO" "$CPU_USO"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
@@ -45,4 +45,19 @@ while true; do
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 8 "ALTERAR SENHA" 20 "BADVPN"
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 9 "REMOVER EXPIRADOS" 21 "AUTO MENU"
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 10 "RELATORIO USUARIOS" 22 "CHATBOTS"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 11 "GERENCIAR CHAVES" 23 "SOBRE"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 12 "OPCOES DE CONEXAO" 0 "SAIR DO MENU"
+    echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
+    
+    echo ""
+    echo -ne "${AMARELO}Opção ?: ${SEM_COR}"
+    read opcao
+    
+    case $opcao in
+        1) echo "Função Criar Usuário em desenvolvimento..." ;;
+        2) echo "Função Criar Teste em desenvolvimento..." ;;
+        # Adicione os caminhos das suas funções reais aqui depois
+        0) clear; exit 0 ;;
+        *) echo -e "${VERMELHO}Opção inválida!${SEM_COR}"; sleep 1; clear ;;
+    esac
+done
