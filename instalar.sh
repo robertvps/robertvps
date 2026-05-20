@@ -1,7 +1,7 @@
 cat << 'EOF' > /bin/menu
 #!/bin/bash
 # ========================================================
-# MENU OFICIAL ROBERT.GARCIA - CORES CORRIGIDAS DIRETO NA VPS
+# MENU CORRIGIDO - SEM BUG DE CPU - ROBERT.GARCIA
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -10,15 +10,17 @@ AMARELO='\033[1;33m'
 AZUL='\033[1;34m'
 CENARIO='\033[1;36m'
 BRANCO='\033[1;37m'
-PRETO='\033[0;30m'
+PRETO='\033[1;30m'
 SEM_COR='\033[0m'
 
+# Puxando dados estáveis do sistema (Sem travar a CPU)
 OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
 OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
 RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
 RAM_USO=$(free | awk '/^Mem:/ {printf("%.0f%%"), $3/$2*100}')
 NUCLEOS=$(nproc)
-CPU_USO=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-7.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
+# Comando corrigido e leve para uso de CPU
+CPU_USO=$(ps -A -o %cpu | awk '{s+=$1} END {printf("%.1f%%"), s}')
 TOTAL_USER=$(awk -F : '$3 >= 500 {print $1}' /etc/passwd | grep -v '^nobody' | wc -l)
 ONLINES=$(ps aux | grep -E "sshd|dropbear" | grep -v grep | wc -l)
 
@@ -26,6 +28,7 @@ clear
 while true; do
     HORA_ATUAL=$(date +%H:%M:%S)
     
+    # Cabeçalho Perfeito com o seu Nome ROBERT.GARCIA
     echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
     echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
@@ -35,48 +38,50 @@ while true; do
     printf "${AZUL}│ ${VERMELHO}Conectados: ${BRANCO}%-7s${VERMELHO}Vencidos: ${BRANCO}%-11s${VERMELHO}Criados: ${BRANCO}%-5s${AZUL}│\n" "$ONLINES" "0" "$TOTAL_USER"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
     
-    # Exatamente a sua estrutura de opções (NÚMEROS BRANCOS e COLCHETES PRETOS)
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 1 "CRIAR CONTA" 12 "OTIMIZAR"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 2 "CRIAR CONTA TESTE" 13 "BACKUP"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 3 "REMOVER CONTA" 14 "LIMITAR X"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 4 "CONTAS ONLINE" 15 "BAD VPN"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 5 "MUDAR DATA" 16 "INFO VPS"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 6 "ALTERAR LIMITE" 17 "AVANÇADO"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 7 "MUDAR SENHA" 18 "CHECKUSERS"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 8 "REMOVER EXPIRADOS" 19 "ONLINE APP X"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 9 "RELATORIO DE USUARIOS" 20 "SPEEDTEST"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 10 "MODOS DE CONEXAO" 21 "BANNER"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 11 "SUSPENDER USUARIO" 22 "TRAFEGO"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${AZUL}  %-23s${AZUL}│\n" 0 "SAIR" ""
+    # Estrutura Preferida (Colchetes Pretos, Números Brancos, Setas Azuis)
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 1 "CRIAR USUARIO" 13 "SPEEDTEST"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 2 "CRIAR TESTE" 14 "OTIMIZAR"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 3 "REMOVER USUARIO" 15 "TRAFEGO"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 4 "RENOVAR USUARIO" 16 "FIREWALL"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 5 "USUARIOS ONLINE" 17 "INFO SISTEMA"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 6 "ALTERAR DATA" 18 "BANNER"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 7 "ALTERAR LIMITE" 19 "LIMITAR SSH"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 8 "ALTERAR SENHA" 20 "BADVPN"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 9 "REMOVER EXPIRADOS" 21 "AUTO MENU"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 10 "RELATORIO USUARIOS" 22 "CHATBOTS"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 11 "BACKUP DE USUARIOS" 23 "MAIS OPCOES"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 12 "MODOS DE CONEXAO" 0 "SAIR DO MENU"
     
     echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
     echo ""
     echo -ne "${AZUL}O QUE DESEJA FAZER ? : ${BRANCO}"
     read opcao
 
+    # Comandos Reais corrigidos para a sua VPS SSHPLUS puxar as telas certas
     case $opcao in
-        1|01) criarusuario ;;
-        2|02) criarteste ;;
-        3|03) remover ;;
-        4|04) onlines ;;
-        5|05) mudardata ;;
-        6|06) alterarlimite ;;
-        7|07) mudarsenha ;;
-        8|08) expirados ;;
-        9|09) relatorio ;;
-        10) conexao ;; # Sua Opção 10 funcional!
-        11) suspender ;;
-        12) otimizar ;;
-        13) backup ;;
-        14) limitar ;;
-        15) badvpn ;;
-        16) infovps ;;
-        17) avancado ;;
-        18) checkusers ;;
-        19) onlineapp ;;
-        20) speedtest ;;
-        21) banner ;;
-        22) trafego ;;
+        1|01) menu_criarusuario || bash /etc/sshplus/criarusuario ;;
+        2|02) menu_criarteste || bash /etc/sshplus/criarteste ;;
+        3|03) menu_removerusuario || bash /etc/sshplus/removerusuario ;;
+        4|04) menu_renovarusuario || bash /etc/sshplus/renovarusuario ;;
+        5|05) menu_usuariosonline || bash /etc/sshplus/usuariosonline ;;
+        6|06) menu_alterardata || bash /etc/sshplus/alterardata ;;
+        7|07) menu_alterarlimite || bash /etc/sshplus/alterarlimite ;;
+        8|08) menu_alterarsenha || bash /etc/sshplus/alterarsenha ;;
+        9|09) menu_removerexpirados || bash /etc/sshplus/removerexpirados ;;
+        10) menu_relatoriousuarios || bash /etc/sshplus/relatoriousuarios ;;
+        11) menu_backupusuarios || bash /etc/sshplus/backupusuarios ;;
+        12) menu_modosdeconexao || bash /etc/sshplus/modosdeconexao || bash /etc/sshplus/conexao ;;
+        13) speedtest-cli || speedtest ;;
+        14) menu_otimizar || bash /etc/sshplus/otimizar ;;
+        15) menu_trafego || bash /etc/sshplus/trafego ;;
+        16) menu_firewall || ufw status ;;
+        17) menu_infosistema || screen -version ;;
+        18) menu_banner ;;
+        19) menu_limitarssh ;;
+        20) menu_badvpn ;;
+        21) menu_automenu ;;
+        22) menu_chatbots ;;
+        23) menu_maisopcoes ;;
         0|00) clear; exit 0 ;;
         *) echo -e "\n${VERMELHO}Opção Inválida!${SEM_COR}"; sleep 1 ;;
     esac
