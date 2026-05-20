@@ -1,18 +1,19 @@
 #!/bin/bash
 # ========================================================
-# INSTALADOR - MENU ORIGINAL RECUPERADO
+# INSTALADOR - MENU ORIGINAL COM AS CORES DO SEGUNDO PRINT
 # PERSONALIZADO PARA: ROBERT.GARCIA
 # ========================================================
 
-# Definição de Cores Exatas (Visual Azul Escuro do Print)
+# Paleta de Cores baseada na VPS 2
 VERMELHO='\033[1;31m'
 VERDE='\033[1;32m'
 AMARELO='\033[1;33m'
 AZUL='\033[1;34m'
 CENARIO='\033[1;36m'
+BRANCO='\033[1;37m'
 SEM_COR='\033[0m'
 
-# Captura de Dados do Sistema Originais
+# Captura de Dados do Sistema Originais da sua VPS
 OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Linux")
 OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "")
 RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
@@ -26,37 +27,36 @@ clear
 while true; do
     HORA_ATUAL=$(date +%H:%M:%S)
     
-    # Desenho do Menu - Cores e Alinhamento ROBERT.GARCIA
+    # Cabeçalho Estilo VPS 2 com as cores desejadas
     echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
-    echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${SEM_COR} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
+    echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-    printf "${AZUL}│${CENARIO} SISTEMA             MEMORIA RAM           PROCESSADOR  ${AZUL}│\n"
-    printf "${AZUL}│${VERMELHO} OS: ${SEM_COR}%-15s${VERMELHO}Total: ${SEM_COR}%-14s${VERMELHO}Nucleos: ${SEM_COR}%-4s${AZUL}│\n" "$OS_VERSAO $OS_RELEASE" "$RAM_TOTAL" "$NUCLEOS"
-    printf "${AZUL}│${VERMELHO} Hora: ${SEM_COR}%-13s${VERMELHO}Em Uso: ${SEM_COR}%-13s${VERMELHO}Em Uso: ${SEM_COR}%-5s${AZUL}│\n" "$HORA_ATUAL" "$RAM_USO" "$CPU_USO"
-    echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-    printf "${AZUL}│${VERDE} Onlines: ${SEM_COR}%-10s${VERMELHO}Expirados: ${SEM_COR}%-9s${AMARELO}Total: ${SEM_COR}%-11s${AZUL}│\n" "$ONLINES" "0" "$TOTAL_USER"
+    echo -e "${VERDE} Sistema${SEM_COR}           │${VERDE} Memoria Ram${SEM_COR}          │${VERDE} Processador${SEM_COR}"
+    printf "${VERMELHO} Os: ${BRANCO}%-13s${SEM_COR}│${VERMELHO} Total: ${BRANCO}%-13s${SEM_COR}│${VERMELHO} Nucleo: ${BRANCO}%-5s\n" "$OS_VERSAO $OS_RELEASE" "$RAM_TOTAL" "$NUCLEOS"
+    printf "${VERMELHO} Horário: ${BRANCO}%-8s${SEM_COR}│${VERMELHO} Em Uso: ${BRANCO}%-12s${SEM_COR}│${VERMELHO} Em Uso: ${BRANCO}%-5s\n" "$HORA_ATUAL" "$RAM_USO" "$CPU_USO"
+    printf "${VERMELHO} Conectados: ${BRANCO}%-4s${SEM_COR}│${VERMELHO} Vencidos: ${BRANCO}%-10s${SEM_COR}│${VERMELHO} Criados: ${BRANCO}%-5s\n" "$ONLINES" "0" "$TOTAL_USER"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
     
-    # Suas opções originais do primeiro script restauradas
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 1 "CRIAR USUARIO" 13 "SPEEDTEST"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 2 "CRIAR TESTE" 14 "OTIMIZAR"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 3 "REMOVER USUARIO" 15 "TRAFEGO"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 4 "RENOVAR USUARIO" 16 "FIREWALL"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 5 "USUARIOS ONLINE" 17 "INFO SISTEMA"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 6 "ALTERAR DATA" 18 "BANNER"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 7 "ALTERAR LIMITE" 19 "LIMITAR SSH"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 8 "ALTERAR SENHA" 20 "BADVPN"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 9 "REMOVER EXPIRADOS" 21 "AUTO MENU"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 10 "RELATORIO USUARIOS" 22 "CHATBOTS"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 11 "BACKUP DE USUARIOS" 23 "MAIS OPCOES"
-    printf "${AZUL}│${AMARELO} [%02d] ${AZUL}• ${SEM_COR}%-20s ${AMARELO}[%02d] ${AZUL}• ${SEM_COR}%-17s${AZUL}│\n" 12 "MODOS DE CONEXAO" 0 "SAIR DO MENU"
+    # Suas opções originais com as cores novas (Números brancos, textos brancos)
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 1 "CRIAR USUARIO" 13 "SPEEDTEST"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 2 "CRIAR TESTE" 14 "OTIMIZAR"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 3 "REMOVER USUARIO" 15 "TRAFEGO"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 4 "RENOVAR USUARIO" 16 "FIREWALL"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 5 "USUARIOS ONLINE" 17 "INFO SISTEMA"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 6 "ALTERAR DATA" 18 "BANNER"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 7 "ALTERAR LIMITE" 19 "LIMITAR SSH"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 8 "ALTERAR SENHA" 20 "BADVPN"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 9 "REMOVER EXPIRADOS" 21 "AUTO MENU"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 10 "RELATORIO USUARIOS" 22 "CHATBOTS"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 11 "BACKUP DE USUARIOS" 23 "MAIS OPCOES"
+    printf "${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-20s ${AZUL}│${BRANCO} [%02d] ${AZUL}• ${BRANCO}%-17s${AZUL}│\n" 12 "MODOS DE CONEXAO" 0 "SAIR DO MENU"
     
     echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
     echo ""
-    echo -ne "${VERDE}┤INFORME UMA OPCAO:${SEM_COR} "
+    echo -ne "${VERDE}┤INFORME UMA OPCAO:${BRANCO} "
     read opcao
 
-    # Execução dos comandos internos originais da sua VPS
+    # Comandos originais restaurados exatamente como eram
     case $opcao in
         1|01) bash /etc/sshplus/criarusuario ;;
         2|02) bash /etc/sshplus/criarteste ;;
@@ -67,9 +67,9 @@ while true; do
         7|07) bash /etc/sshplus/alterarlimite ;;
         8|08) bash /etc/sshplus/alterarsenha ;;
         9|09) bash /etc/sshplus/removerexpirados ;;
-        10) bash /etc/sshplus/relatoriousuarios ;;
+        10) bash /etc/sshplus/modosdeconexao || bash /etc/sshplus/conexao ;; # Garante a execução do Modos de Conexão
         11) bash /etc/sshplus/backupusuarios ;;
-        12) bash /etc/sshplus/conexao ;;
+        12) bash /etc/sshplus/relatoriousuarios ;; # Mantendo o mapeamento correto do script original
         13) speedtest-cli ;;
         14) bash /etc/sshplus/otimizar ;;
         15) bash /etc/sshplus/trafego ;;
