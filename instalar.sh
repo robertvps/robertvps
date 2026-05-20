@@ -1,7 +1,7 @@
 cat << 'EOF' > /bin/menu
 #!/bin/bash
 # ========================================================
-# MENU CORRIGIDO - SEM BUG DE CPU - ROBERT.GARCIA
+# MENU COMPLETO - ESTRUTURA CLÁSSICA REPARADA - ROBERT.GARCIA
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -13,14 +13,13 @@ BRANCO='\033[1;37m'
 PRETO='\033[1;30m'
 SEM_COR='\033[0m'
 
-# Puxando dados estáveis do sistema (Sem travar a CPU)
+# Estatísticas leves e reais (Idênticas ao seu print original)
 OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
 OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
 RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
 RAM_USO=$(free | awk '/^Mem:/ {printf("%.0f%%"), $3/$2*100}')
 NUCLEOS=$(nproc)
-# Comando corrigido e leve para uso de CPU
-CPU_USO=$(ps -A -o %cpu | awk '{s+=$1} END {printf("%.1f%%"), s}')
+CPU_USO=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-7.]*\)%* id.*/\1/" | awk '{printf("%.1f"), 100 - $1}')
 TOTAL_USER=$(awk -F : '$3 >= 500 {print $1}' /etc/passwd | grep -v '^nobody' | wc -l)
 ONLINES=$(ps aux | grep -E "sshd|dropbear" | grep -v grep | wc -l)
 
@@ -28,7 +27,6 @@ clear
 while true; do
     HORA_ATUAL=$(date +%H:%M:%S)
     
-    # Cabeçalho Perfeito com o seu Nome ROBERT.GARCIA
     echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
     echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
@@ -38,7 +36,7 @@ while true; do
     printf "${AZUL}│ ${VERMELHO}Conectados: ${BRANCO}%-7s${VERMELHO}Vencidos: ${BRANCO}%-11s${VERMELHO}Criados: ${BRANCO}%-5s${AZUL}│\n" "$ONLINES" "0" "$TOTAL_USER"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
     
-    # Estrutura Preferida (Colchetes Pretos, Números Brancos, Setas Azuis)
+    # A SUA ORDEM EXATA DE OPÇÕES DO PRINT (Números Brancos / Colchetes Pretos)
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 1 "CRIAR USUARIO" 13 "SPEEDTEST"
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 2 "CRIAR TESTE" 14 "OTIMIZAR"
     printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 3 "REMOVER USUARIO" 15 "TRAFEGO"
@@ -57,31 +55,31 @@ while true; do
     echo -ne "${AZUL}O QUE DESEJA FAZER ? : ${BRANCO}"
     read opcao
 
-    # Comandos Reais corrigidos para a sua VPS SSHPLUS puxar as telas certas
+    # SISTEMA DE ATALHOS DIRETOS (Chama os arquivos originais da VPS se as funções falharem)
     case $opcao in
-        1|01) menu_criarusuario || bash /etc/sshplus/criarusuario ;;
-        2|02) menu_criarteste || bash /etc/sshplus/criarteste ;;
-        3|03) menu_removerusuario || bash /etc/sshplus/removerusuario ;;
-        4|04) menu_renovarusuario || bash /etc/sshplus/renovarusuario ;;
-        5|05) menu_usuariosonline || bash /etc/sshplus/usuariosonline ;;
-        6|06) menu_alterardata || bash /etc/sshplus/alterardata ;;
-        7|07) menu_alterarlimite || bash /etc/sshplus/alterarlimite ;;
-        8|08) menu_alterarsenha || bash /etc/sshplus/alterarsenha ;;
-        9|09) menu_removerexpirados || bash /etc/sshplus/removerexpirados ;;
-        10) menu_relatoriousuarios || bash /etc/sshplus/relatoriousuarios ;;
-        11) menu_backupusuarios || bash /etc/sshplus/backupusuarios ;;
-        12) menu_modosdeconexao || bash /etc/sshplus/modosdeconexao || bash /etc/sshplus/conexao ;;
+        1|01) criarusuario || bash /etc/sshplus/criarusuario || menu ;;
+        2|02) criarteste || bash /etc/sshplus/criarteste || menu ;;
+        3|03) removerusuario || bash /etc/sshplus/removerusuario || remover ;;
+        4|04) renovarusuario || bash /etc/sshplus/renovarusuario || renovar ;;
+        5|05) usuariosonline || bash /etc/sshplus/usuariosonline || onlines ;;
+        6|06) alterardata || bash /etc/sshplus/alterardata ;;
+        7|07) alterarlimite || bash /etc/sshplus/alterarlimite ;;
+        8|08) alterarsenha || bash /etc/sshplus/alterarsenha ;;
+        9|09) removerexpirados || bash /etc/sshplus/removerexpirados || expirados ;;
+        10) relatoriousuarios || bash /etc/sshplus/relatoriousuarios || relatorio ;;
+        11) backupusuarios || bash /etc/sshplus/backupusuarios || backup ;;
+        12) modosdeconexao || bash /etc/sshplus/modosdeconexao || conexao ;;
         13) speedtest-cli || speedtest ;;
-        14) menu_otimizar || bash /etc/sshplus/otimizar ;;
-        15) menu_trafego || bash /etc/sshplus/trafego ;;
-        16) menu_firewall || ufw status ;;
-        17) menu_infosistema || screen -version ;;
-        18) menu_banner ;;
-        19) menu_limitarssh ;;
-        20) menu_badvpn ;;
-        21) menu_automenu ;;
-        22) menu_chatbots ;;
-        23) menu_maisopcoes ;;
+        14) otimizar || bash /etc/sshplus/otimizar ;;
+        15) trafego || bash /etc/sshplus/trafego ;;
+        16) firewall || ufw status || dados ;;
+        17) infosistema || nload ;;
+        18) banner || dados ;;
+        19) limitarssh || dados ;;
+        20) badvpn || dados ;;
+        21) automenu || dados ;;
+        22) chatbots || dados ;;
+        23) maisopcoes || dados ;;
         0|00) clear; exit 0 ;;
         *) echo -e "\n${VERMELHO}Opção Inválida!${SEM_COR}"; sleep 1 ;;
     esac
