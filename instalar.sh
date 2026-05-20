@@ -1,22 +1,20 @@
+cat << 'EOF' > /bin/menu
 #!/bin/bash
 # ========================================================
-# SEU MENU ORIGINAL COM CORES MODIFICADAS SOB MEDIDA
-# PERSONALIZADO PARA: ROBERT.GARCIA
+# MENU OFICIAL ROBERT.GARCIA - CORES CORRIGIDAS DIRETO NA VPS
 # ========================================================
 
-# Definição das Cores Solicitadas
 VERMELHO='\033[1;31m'
 VERDE='\033[1;32m'
 AMARELO='\033[1;33m'
 AZUL='\033[1;34m'
 CENARIO='\033[1;36m'
 BRANCO='\033[1;37m'
-PRETO='\033[0;30m' # Cor Preta para os Colchetes
+PRETO='\033[0;30m'
 SEM_COR='\033[0m'
 
-# Dados do Sistema Originais
 OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
-OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "20.04")
+OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
 RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
 RAM_USO=$(free | awk '/^Mem:/ {printf("%.0f%%"), $3/$2*100}')
 NUCLEOS=$(nproc)
@@ -28,62 +26,60 @@ clear
 while true; do
     HORA_ATUAL=$(date +%H:%M:%S)
     
-    # Cabeçalho Ajustado com o seu Nome ROBERT.GARCIA e o fundo azul escuro
     echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
     echo -e "${AZUL}│${SEM_COR}          ${VERDE}█▓▒░${BRANCO} ROBERT.GARCIA ${VERDE}░▒▓█${SEM_COR}          ${AZUL}│${SEM_COR}"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-    echo -e "${AZUL}│ ${VERDE}SISTEMA${SEM_COR}             ${VERDE}MEMORIA RAM${SEM_COR}           ${VERDE}PROCESSADOR${SEM_COR}  ${AZUL}│${SEM_COR}"
-    printf "${AZUL}│ ${VERMELHO}OS: ${BRANCO}%-15s${VERMELHO}Total: ${BRANCO}%-14s${VERMELHO}Nucleos: ${BRANCO}%-5s${AZUL}│\n" "$OS_VERSAO $OS_RELEASE" "$RAM_TOTAL" "$NUCLEOS"
-    printf "${AZUL}│ ${VERMELHO}Hora: ${BRANCO}%-13s${VERMELHO}Em Uso: ${BRANCO}%-13s${VERMELHO}Em Uso: ${BRANCO}%-6s${AZUL}│\n" "$HORA_ATUAL" "$RAM_USO" "$CPU_USO"
-    echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-    printf "${AZUL}│ ${VERDE}Onlines: ${BRANCO}%-10s${VERMELHO}Expirados: ${BRANCO}%-9s${AMARELO}Total: ${BRANCO}%-12s${AZUL}│\n" "$ONLINES" "0" "$TOTAL_USER"
+    echo -e "${AZUL}│ ${VERDE}Sistema${SEM_COR}             ${VERDE}Memória Ram${SEM_COR}           ${VERDE}Processador${SEM_COR}  ${AZUL}│${SEM_COR}"
+    printf "${AZUL}│ ${VERMELHO}Os: ${BRANCO}%-15s${VERMELHO}Total: ${BRANCO}%-14s${VERMELHO}Nucleo: ${BRANCO}%-5s${AZUL}│\n" "$OS_VERSAO $OS_RELEASE" "$RAM_TOTAL" "$NUCLEOS"
+    printf "${AZUL}│ ${VERMELHO}Horário: ${BRANCO}%-10s${VERMELHO}Em Uso: ${BRANCO}%-13s${VERMELHO}Em Uso: ${BRANCO}%-5s${AZUL}│\n" "$HORA_ATUAL" "$RAM_USO" "$CPU_USO"
+    printf "${AZUL}│ ${VERMELHO}Conectados: ${BRANCO}%-7s${VERMELHO}Vencidos: ${BRANCO}%-11s${VERMELHO}Criados: ${BRANCO}%-5s${AZUL}│\n" "$ONLINES" "0" "$TOTAL_USER"
     echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
     
-    # OPÇÕES: Colchetes em PRETO e Números em BRANCO conforme você pediu
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 1 "CRIAR USUARIO" 13 "SPEEDTEST"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 2 "CRIAR TESTE" 14 "OTIMIZAR"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 3 "REMOVER USUARIO" 15 "TRAFEGO"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 4 "RENOVAR USUARIO" 16 "FIREWALL"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 5 "USUARIOS ONLINE" 17 "INFO SISTEMA"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 6 "ALTERAR DATA" 18 "BANNER"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 7 "ALTERAR LIMITE" 19 "LIMITAR SSH"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 8 "ALTERAR SENHA" 20 "BADVPN"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 9 "REMOVER EXPIRADOS" 21 "AUTO MENU"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 10 "RELATORIO USUARIOS" 22 "CHATBOTS"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 11 "BACKUP DE USUARIOS" 23 "MAIS OPCOES"
-    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-16s${AZUL}│\n" 12 "MODOS DE CONEXAO" 0 "SAIR DO MENU"
+    # Exatamente a sua estrutura de opções (NÚMEROS BRANCOS e COLCHETES PRETOS)
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 1 "CRIAR CONTA" 12 "OTIMIZAR"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 2 "CRIAR CONTA TESTE" 13 "BACKUP"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 3 "REMOVER CONTA" 14 "LIMITAR X"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 4 "CONTAS ONLINE" 15 "BAD VPN"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 5 "MUDAR DATA" 16 "INFO VPS"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 6 "ALTERAR LIMITE" 17 "AVANÇADO"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 7 "MUDAR SENHA" 18 "CHECKUSERS"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 8 "REMOVER EXPIRADOS" 19 "ONLINE APP X"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 9 "RELATORIO DE USUARIOS" 20 "SPEEDTEST"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 10 "MODOS DE CONEXAO" 21 "BANNER"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-16s${AZUL}│\n" 11 "SUSPENDER USUARIO" 22 "TRAFEGO"
+    printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} ➔ ${BRANCO}%-19s ${AZUL}  %-23s${AZUL}│\n" 0 "SAIR" ""
     
     echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
     echo ""
-    echo -ne "${VERDE}INFORME UMA OPÇÃO: ${BRANCO}"
+    echo -ne "${AZUL}O QUE DESEJA FAZER ? : ${BRANCO}"
     read opcao
 
-    # Mantendo os comandos exatos de fábrica do seu script original
     case $opcao in
-        1|01) menu ;;
+        1|01) criarusuario ;;
         2|02) criarteste ;;
         3|03) remover ;;
-        4|04) renovar ;;
-        5|05) onlines ;;
-        6|06) alterardata ;;
-        7|07) alterarlimite ;;
-        8|08) alterarsenha ;;
-        9|09) expirados ;;
-        10) relatorio ;;
-        11) backup ;;
-        12) conexao ;;
-        13) speedtest ;;
-        14) otimizar ;;
-        15) trafego ;;
-        16) dados ;;
-        17) nload ;;
-        18) dados ;;
-        19) dados ;;
-        20) dados ;;
-        21) dados ;;
-        22) dados ;;
-        23) dados ;;
+        4|04) onlines ;;
+        5|05) mudardata ;;
+        6|06) alterarlimite ;;
+        7|07) mudarsenha ;;
+        8|08) expirados ;;
+        9|09) relatorio ;;
+        10) conexao ;; # Sua Opção 10 funcional!
+        11) suspender ;;
+        12) otimizar ;;
+        13) backup ;;
+        14) limitar ;;
+        15) badvpn ;;
+        16) infovps ;;
+        17) avancado ;;
+        18) checkusers ;;
+        19) onlineapp ;;
+        20) speedtest ;;
+        21) banner ;;
+        22) trafego ;;
         0|00) clear; exit 0 ;;
         *) echo -e "\n${VERMELHO}Opção Inválida!${SEM_COR}"; sleep 1 ;;
     esac
 done
+EOF
+chmod +x /bin/menu
