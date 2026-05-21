@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT 100% CORRIGIDO COM RETORNO AO MENU - ROBERT.GARCIA
+# SCRIPT FOCO TOTAL NA OPÇÃO 12 E SEUS SUB-MENUS
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -11,17 +11,11 @@ BRANCO='\033[1;37m'
 PRETO='\033[1;30m'
 SEM_COR='\033[0m'
 
-# Auto-instalador silencioso de dependências
-garantir_ferramentas() {
-    for pacote in net-tools speedtest-cli nload screen; do
-        if ! command -v $pacote &>/dev/null && ! dpkg -s $pacote &>/dev/null; then
-            apt-get update -y >/dev/null 2>&1
-            apt-get install $pacote -y >/dev/null 2>&1
-            break
-        fi
-    done
-}
-garantir_ferramentas
+# Garante ferramentas básicas silenciosamente
+if ! command -v netstat &>/dev/null; then
+    apt-get update -y >/dev/null 2>&1
+    apt-get install net-tools -y >/dev/null 2>&1
+fi
 
 DATABASE="/root/usuarios.db"
 [[ ! -f "$DATABASE" ]] && touch "$DATABASE"
@@ -32,10 +26,8 @@ while true; do
     RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
     RAM_USO=$(free | awk '/^Mem:/ {printf("%.0f%%"), $3/$2*100}')
     NUCLEOS=$(nproc)
-    
     CPU_USO=$(vmstat 1 2 | tail -1 | awk '{print 100 - $15"%"}')
     [[ -z "$CPU_USO" || "$CPU_USO" == "%" ]] && CPU_USO="1%"
-
     TOTAL_USER=$(awk -F : '$3 >= 1000 {print $1}' /etc/passwd | grep -v '^nobody' | wc -l)
     ONLINES=$(ps aux | grep -E "sshd|dropbear" | grep -v grep | wc -l)
     HORA_ATUAL=$(date +%H:%M:%S)
@@ -70,240 +62,85 @@ while true; do
     read opcao
 
     case $opcao in
-        1|01)
+        1|01|2|02|3|03|4|04|5|05|6|06|7|07|8|08|9|09|10|11|13|14|15|16|17|18|19|20|21|22|23)
+            # Travado temporariamente para mantermos o foco total na 12
             clear
-            echo -e "${VERDE}=== CRIAR NOVO USUÁRIO SSH ===${SEM_COR}"
-            read -p "Nome do Usuário: " usser
-            [[ -z "$usser" ]] && continue
-            read -p "Senha do Usuário: " ssenha
-            read -p "Dias de validade (Ex: 30): " ddias
-            read -p "Limite de Conexões (Ex: 1): " llimite
-            expira=$(date -d "+$ddias days" +%Y-%m-%d)
-            useradd -M -s /bin/false -e "$expira" "$usser" >/dev/null 2>&1
-            echo "$usser:$ssenha" | chpasswd >/dev/null 2>&1
-            sed -i "/^$usser /d" "$DATABASE"
-            echo "$usser $llimite $expira" >> "$DATABASE"
-            echo -e "\n${VERDE}Usuário $usser criado com sucesso!${SEM_COR}"
+            echo -e "${AMARELO}Aviso: Estamos focando apenas na OPÇÃO 12 agora! Escolha a 12.${SEM_COR}"
             sleep 2
-            ;;
-        2|02)
-            clear
-            echo -e "${VERDE}=== CRIAR USUÁRIO TESTE (1 HORA) ===${SEM_COR}"
-            read -p "Nome do Teste: " usser
-            [[ -z "$usser" ]] && continue
-            read -p "Senha do Teste: " ssenha
-            read -p "Limite de Conexões: " llimite
-            expira=$(date -d "+1 day" +%Y-%m-%d)
-            useradd -M -s /bin/false -e "$expira" "$usser" >/dev/null 2>&1
-            echo "$usser:$ssenha" | chpasswd >/dev/null 2>&1
-            sed -i "/^$usser /d" "$DATABASE"
-            echo "$usser $llimite $expira" >> "$DATABASE"
-            (sleep 3600 && userdel -f "$usser" && sed -i "/^$usser /d" "$DATABASE") & >/dev/null 2>&1
-            echo -e "\n${VERDE}Teste criado! Ele sumirá automaticamente em 1 hora.${SEM_COR}"
-            sleep 2
-            ;;
-        3|03)
-            clear
-            echo -e "${VERMELHO}=== REMOVER USUÁRIO SSH ===${SEM_COR}"
-            read -p "Digite o usuário para deletar: " usser
-            [[ -z "$usser" ]] && continue
-            if id "$usser" >/dev/null 2>&1; then
-                userdel -f "$usser"
-                sed -i "/^$usser /d" "$DATABASE"
-                echo -e "${VERDE}Usuário deletado com sucesso!${SEM_COR}"
-            else
-                echo -e "${VERMELHO}Usuário inexistente.${SEM_COR}"
-            fi
-            sleep 2
-            ;;
-        4|04)
-            clear
-            echo -e "${VERDE}=== RENOVAR USUÁRIO ===${SEM_COR}"
-            read -p "Nome do Usuário: " usser
-            read -p "Adicionar quantos dias?: " ddias
-            expira=$(date -d "+$ddias days" +%Y-%m-%d)
-            chage -E "$expira" "$usser" >/dev/null 2>&1
-            limite_antigo=$(grep -w "$usser" "$DATABASE" | awk '{print $2}')
-            [[ -z "$limite_antigo" ]] && limite_antigo="1"
-            sed -i "/^$usser /d" "$DATABASE"
-            echo "$usser $limite_antigo $expira" >> "$DATABASE"
-            echo -e "${VERDE}Renovado com sucesso até $expira!${SEM_COR}"
-            sleep 2
-            ;;
-        5|05)
-            clear
-            echo -e "${VERDE}=== USUÁRIOS CONECTADOS ===${SEM_COR}"
-            echo -e "--------------------------------------------------"
-            printf "%-20s %-15s\n" "USUÁRIO" "CONEXÕES"
-            echo -e "--------------------------------------------------"
-            ps aux | grep -E "sshd:" | grep -v grep | grep -v "root" | awk '{print $11}' | cut -d@ -f1 | sort | uniq -c
-            echo -e "--------------------------------------------------"
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        6|06)
-            clear
-            echo -e "${VERDE}=== ALTERAR DATA MANUAL ===${SEM_COR}"
-            read -p "Nome do Usuário: " usser
-            read -p "Nova Data (Ex: 2026-12-31): " ndata
-            chage -E "$ndata" "$usser" >/dev/null 2>&1
-            echo -e "${VERDE}Data alterada com sucesso!${SEM_COR}"
-            sleep 2
-            ;;
-        7|07)
-            clear
-            echo -e "${VERDE}=== ALTERAR LIMITE SIMULTÂNEO ===${SEM_COR}"
-            read -p "Nome do Usuário: " usser
-            read -p "Novo Limite: " nlimite
-            data_salva=$(grep -w "$usser" "$DATABASE" | awk '{print $3}')
-            [[ -z "$data_salva" ]] && data_salva=$(date -d "+30 days" +%Y-%m-%d)
-            sed -i "/^$usser /d" "$DATABASE"
-            echo "$usser $nlimite $data_salva" >> "$DATABASE"
-            echo -e "${VERDE}Limite alterado para $nlimite!${SEM_COR}"
-            sleep 2
-            ;;
-        8|08)
-            clear
-            echo -e "${VERDE}=== ALTERAR SENHA ===${SEM_COR}"
-            read -p "Nome do Usuário: " usser
-            read -p "Nova Senha: " nsenha
-            echo "$usser:$nsenha" | chpasswd
-            echo -e "${VERDE}Senha modificada!${SEM_COR}"
-            sleep 2
-            ;;
-        9|09)
-            clear
-            echo -e "${VERDE}=== LIMPAR EXPIRADOS NATIVOS ===${SEM_COR}"
-            hoje=$(date +%s)
-            while read -r linha; do
-                u=$(echo "$linha" | awk '{print $1}')
-                d=$(echo "$linha" | awk '{print $3}')
-                if [[ -n "$d" ]]; then
-                    venc_sec=$(date -d "$d" +%s 2>/dev/null)
-                    if [[ "$venc_sec" -lt "$hoje" ]]; then
-                        echo "Removendo expirado: $u"
-                        userdel -f "$u" >/dev/null 2>&1
-                        sed -i "/^$u /d" "$DATABASE"
-                    fi
-                fi
-            done < "$DATABASE"
-            echo -e "${VERDE}Varredura finalizada.${SEM_COR}"
-            sleep 2
-            ;;
-        10)
-            clear
-            echo -e "${VERDE}=== LISTA COMPLETA DE CLIENTES ===${SEM_COR}"
-            echo -e "--------------------------------------------------"
-            printf "%-15s %-15s %-10s\n" "USUÁRIO" "VENCIMENTO" "LIMITE"
-            echo -e "--------------------------------------------------"
-            while read -r u l d; do
-                [[ -z "$u" ]] && continue
-                printf "%-15s %-15s %-10s\n" "$u" "$d" "$l"
-            done < "$DATABASE"
-            echo -e "--------------------------------------------------"
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        11)
-            clear
-            echo -e "${VERDE}=== CHAVES HOST DO SISTEMA ===${SEM_COR}"
-            cat /etc/ssh/ssh_host_rsa_key.pub 2>/dev/null || echo "Gerando chaves padrões rsa..."
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         12)
-            clear
-            echo -e "${VERDE}=== OPÇÕES DE CONEXÃO ATIVAS ===${SEM_COR}"
-            netstat -tlpn | grep -E "sshd|dropbear|badvpn"
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        13)
-            clear
-            echo -e "${VERDE}Executando Teste de Velocidade Oficial...${SEM_COR}"
-            speedtest-cli --secure
-            echo -ne "\nPressione Enter para retornar ao menu..."; read
-            ;;
-        14)
-            clear
-            echo -e "${VERDE}Limpando cache da memória RAM...${SEM_COR}"
-            sync && echo 3 > /proc/sys/vm/drop_caches
-            echo -e "${VERDE}Sistema Otimizado com sucesso!${SEM_COR}"
-            sleep 2
-            ;;
-        15)
-            clear
-            echo -e "${VERDE}=== MONITOR DE TRÁFEGO ===${SEM_COR}"
-            nload
-            ;;
-        16)
-            clear
-            echo -e "${VERDE}=== STATUS DO FIREWALL ===${SEM_COR}"
-            ufw status 2>/dev/null || echo "Firewall padrão liberado."
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        17)
-            clear
-            echo -e "${VERDE}=== INFORMAÇÕES DETALHADAS DO SERVIDOR ===${SEM_COR}"
-            echo -e "Processador: $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)"
-            echo -e "Uptime (Tempo Online): $(uptime -p)"
-            echo -e "Uso do Disco Principal:"
-            df -h / | tail -n 1 | awk '{print "Total: " $2 " | Usado: " $3 " | Livre: " $4 " (" $5 ")"}'
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        18)
-            clear
-            echo -e "${VERDE}=== BANNER DO SCRIPT ===${SEM_COR}"
-            echo "Para editar a mensagem de entrada edite o arquivo /etc/issue.net"
-            echo -ne "\nPressione Enter para sair do menu..."; read
-            ;;
-        19)
-            clear
-            echo -e "${VERDE}=== SISTEMA DE VALIDAÇÃO DE LIMITES ===${SEM_COR}"
-            echo "Analisando conexões em tempo real..."
-            while read -r u_name u_max u_exp; do
-                [[ -z "$u_name" ]] && continue
-                conectados=$(ps aux | grep -E "sshd: $u_name" | grep -v grep | wc -l)
-                if (( conectados > u_max )); then
-                     echo "Usuário $u_name ultrapassou o limite ($conectados/$u_max). Desconectando..."
-                     pkill -u "$u_name" -f "sshd:"
-                fi
-            done < "$DATABASE"
-            echo "Concluído!"
-            sleep 2
-            ;;
-        20)
-            clear
-            echo -e "${VERDE}=== BADVPN INSTALADOR/INICIALIZADOR ===${SEM_COR}"
-            if ps x | grep badvpn-udpgw | grep -v grep >/dev/null; then
-                echo "BadVPN já está operando na porta 7300."
-            else
-                echo "Iniciando BadVPN..."
-                screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 1000
-                echo "BadVPN ativado com sucesso para jogos!"
-            fi
-            sleep 2
-            ;;
-        21)
-            clear
-            echo -e "${VERDE}=== ATIVAR AUTO-MENU AO LOGAR ===${SEM_COR}"
-            grep -q "menu" /root/.bashrc || echo "menu" >> /root/.bashrc
-            echo "Prontinho! Agora quando abrir o terminal, o menu inicia sozinho."
-            sleep 2
-            ;;
-        22)
-            clear
-            echo -e "${VERDE}=== MODULO CHATBOT CONFIGURADO ===${SEM_COR}"
-            echo "Módulo estruturado e aguardando token de APIs."
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
-            ;;
-        23)
-            clear
-            echo -e "${VERDE}====================================================${SEM_COR}"
-            echo -e "           GERENCIADOR OFICIAL - ROBERT GARCIA      "
-            echo -e "       Versão 1.2 Totalmente Autônoma e Corrigida  "
-            echo -e "===================================================="
-            echo -ne "\nPressione Enter para voltar ao menu..."; read
+            # Início do Loop do Sub-Menu das Opções de Conexão
+            while true; do
+                clear
+                echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
+                echo -e "${AZUL}│${SEM_COR}         ${VERDE}█▓▒░${BRANCO} SUB-MENU: OPÇÕES DE CONEXÃO ${VERDE}░▒▓█${SEM_COR}      ${AZUL}│${SEM_COR}"
+                echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
+                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 1 "VER PORTAS E CONEXÕES ATIVAS"
+                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 2 "ALTERAR PORTA DO OPENSSH (PADRÃO)"
+                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 3 "REINICIAR TODOS OS SERVIÇOS DE REDE"
+                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 4 "VOLTAR AO MENU PRINCIPAL"
+                echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
+                echo ""
+                echo -ne "${AMARELO}Escolha uma sub-opção ?: ${SEM_COR}"
+                read sub_opcao
+
+                case $sub_opcao in
+                    1|01)
+                        clear
+                        echo -e "${VERDE}=== PORTAS EM EXECUÇÃO NO SERVIDOR ===${SEM_COR}"
+                        echo -e "--------------------------------------------------"
+                        netstat -tlpn | grep -E "sshd|dropbear|badvpn|squid|apache|nginx" || echo "Nenhum protocolo ativo encontrado."
+                        echo -e "--------------------------------------------------"
+                        echo ""
+                        echo -ne "${AMARELO}Pressione Enter para retornar ao Sub-Menu...${SEM_COR}"; read
+                        ;;
+                    2|02)
+                        clear
+                        echo -e "${VERDE}=== CONFIGURAR NOVA PORTA DO OPENSSH ===${SEM_COR}"
+                        echo -e "Portas ativas no arquivo de configuração:"
+                        grep -i "^Port" /etc/ssh/sshd_config || echo "Porta padrão ativa: 22"
+                        echo ""
+                        echo -ne "${AMARELO}Digite a nova porta desejada (Ex: 443, 2222): ${SEM_COR}"
+                        read nova_porta
+                        if [[ "$nova_porta" =~ ^[0-9]+$ ]]; then
+                            # Altera ou adiciona a nova porta no arquivo do SSH
+                            sed -i "s/^#Port .*/Port $nova_porta/g" /etc/ssh/sshd_config
+                            sed -i "s/^Port .*/Port $nova_porta/g" /etc/ssh/sshd_config
+                            systemctl restart sshd ssh >/dev/null 2>&1
+                            echo -e "\n${VERDE}Sucesso! Porta alterada para $nova_porta e SSH reiniciado.${SEM_COR}"
+                        else
+                            echo -e "\n${VERMELHO}Erro: Porta inválida (digite apenas números).${SEM_COR}"
+                        fi
+                        echo ""
+                        echo -ne "${AMARELO}Pressione Enter para retornar ao Sub-Menu...${SEM_COR}"; read
+                        ;;
+                    3|03)
+                        clear
+                        echo -e "${AMARELO}=== REINICIANDO PROTOCOLOS DO SERVIDOR ===${SEM_COR}"
+                        echo -e "[+] Reiniciando OpenSSH..."
+                        systemctl restart sshd ssh >/dev/null 2>&1
+                        echo -e "[+] Reiniciando Dropbear..."
+                        systemctl restart dropbear >/dev/null 2>&1
+                        echo -e "[+] Reiniciando Squid (se houver)..."
+                        systemctl restart squid squid3 >/dev/null 2>&1
+                        echo -e "${VERDE}Todos os serviços de conexão foram reiniciados com sucesso!${SEM_COR}"
+                        echo ""
+                        echo -ne "${AMARELO}Pressione Enter para retornar ao Sub-Menu...${SEM_COR}"; read
+                        ;;
+                    4|04)
+                        # Sai do laço interno do sub-menu e volta automaticamente para o painel principal
+                        break
+                        ;;
+                    *)
+                        echo -e "${VERMELHO}Opção incorreta! Escolha de 1 a 4.${SEM_COR}"
+                        sleep 1.5
+                        ;;
+                esac
+            done
             ;;
         0|00)
             clear
-            echo -e "${AMARELO}Saindo do Menu Manager... Até logo!${SEM_COR}"
+            echo -e "${AMARELO}Saindo... Obrigado Robert!${SEM_COR}"
             exit 0
             ;;
         *)
