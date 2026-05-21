@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT COMPLETO - INTEGRADO OPÇÃO 11 (XRAY) E OPÇÃO 12
+# SCRIPT COMPLETO - CORREÇÃO DE REDIRECIONAMENTO XRAY (11)
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -21,6 +21,88 @@ fi
 DATABASE="/root/usuarios.db"
 [[ ! -f "$DATABASE" ]] && touch "$DATABASE"
 
+# FUNÇÃO ISOLADA DO MENU XRAY (Garante que abre e retorna sem bugar)
+funcao_menu_xray() {
+    while true; do
+        # Captura dinâmica da porta do Xray para o topo
+        XRAY_PORTS=$(netstat -tlpn 2>/dev/null | grep 'xray' | awk '{print $4}' | cut -d: -f2 | sort -nu | xargs)
+        [[ -z "$XRAY_PORTS" ]] && XRAY_PORTS="NENHUMA ATIVA"
+
+        clear
+        echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
+        echo -e "${AZUL}│${BG_VERMELHO}                      XRAY (Beta)                       ${SEM_COR}${AZUL}│${SEM_COR}"
+        echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
+        printf "${AZUL}│ ${VERDE}PORTA(s):${BRANCO} %-45s${AZUL}│\n" "$XRAY_PORTS"
+        echo -e "${AZUL}│                                                        │${SEM_COR}"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 1 "USUARIOS E UUID"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 2 "ALTERAR IP"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 3 "ALTERAR SNI"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 4 "ALTERAR HOST/CDN"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 5 "EXIBIR PRESET"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 6 "REINICIAR XRAY"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 7 "REMOVER XRAY"
+        printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 0 "RETORNAR AO MENU"
+        echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
+        echo ""
+        echo -ne "${AMARELO}INFORME UMA OPÇAO: ${SEM_COR}"
+        read xray_opcao
+
+        case $xray_opcao in
+            1|01)
+                clear
+                echo -e "${VERDE}=== GERENCIAR USUÁRIOS E UUID ===${SEM_COR}"
+                echo "Acessando banco de dados de credenciais Xray..."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            2|02)
+                clear
+                echo -e "${VERDE}=== ALTERAR IP DO SERVIDOR XRAY ===${SEM_COR}"
+                echo "Redirecionando tráfego IP..."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            3|03)
+                clear
+                echo -e "${VERDE}=== ALTERAR SNI (Server Name Indication) ===${SEM_COR}"
+                echo "Modificando cabeçalhos de camuflagem do Xray..."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            4|04)
+                clear
+                echo -e "${VERDE}=== ALTERAR HOST / CDN ===${SEM_COR}"
+                echo "Configurando Host Cloudflare/Cloudfront..."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            5|05)
+                clear
+                echo -e "${VERDE}=== EXIBIR PRESET ATUAL ===${SEM_COR}"
+                echo "Buscando arquivo config.json do Xray..."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            6|06)
+                clear
+                echo -e "${AMARELO}=== REINICIANDO CORE DO XRAY ===${SEM_COR}"
+                systemctl restart xray >/dev/null 2>&1 || echo "Xray não instalado ou não encontrado."
+                echo -e "${VERDE}Comando executado!${SEM_COR}"
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            7|07)
+                clear
+                echo -e "${VERMELHO}=== REMOVER XRAY COMPLETO ===${SEM_COR}"
+                echo "Aviso: Isso apagará os binários e portas do Xray."
+                echo -ne "\nPressione Enter para retornar..."; read
+                ;;
+            0|00)
+                break # Sai da função do Xray e volta exatamente para a tela anterior
+                ;;
+            *)
+                echo -e "${VERMELHO}Opção inválida!${SEM_COR}"
+                sleep 1
+                ;;
+        esac
+    done
+}
+
+# LAÇO PRINCIPAL DO SCRIPT
 while true; do
     OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
     OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
@@ -65,87 +147,14 @@ while true; do
     case $opcao in
         1|01|2|02|3|03|4|04|5|05|6|06|7|07|8|08|9|09|10|13|14|15|16|17|18|19|20|21|22|23)
             clear
-            echo -e "${AMARELO}Aviso: Estamos focando apenas nas OPÇÕES 11 e 12 agora! Escolha uma delas.${SEM_COR}"
+            echo -e "${AMARELO}Aviso: Estamos focando apenas nas funções de conexão agora! Escolha a 12.${SEM_COR}"
             sleep 2
             ;;
         11)
-            while true; do
-                # Captura dinâmica da porta do Xray para o topo
-                XRAY_PORTS=$(netstat -tlpn 2>/dev/null | grep 'xray' | awk '{print $4}' | cut -d: -f2 | sort -nu | xargs)
-                [[ -z "$XRAY_PORTS" ]] && XRAY_PORTS="NENHUMA ATIVA"
-
-                clear
-                echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
-                echo -e "${AZUL}│${BG_VERMELHO}                      XRAY (Beta)                       ${SEM_COR}${AZUL}│${SEM_COR}"
-                echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
-                printf "${AZUL}│ ${VERDE}PORTA(s):${BRANCO} %-45s${AZUL}│\n" "$XRAY_PORTS"
-                echo -e "${AZUL}│                                                        │${SEM_COR}"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 1 "USUARIOS E UUID"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 2 "ALTERAR IP"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 3 "ALTERAR SNI"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 4 "ALTERAR HOST/CDN"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 5 "EXIBIR PRESET"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 6 "REINICIAR XRAY"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 7 "REMOVER XRAY"
-                printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 0 "RETORNAR AO MENU"
-                echo -e "${AZUL}└────────────────────────────────────────────────────────┘${SEM_COR}"
-                echo ""
-                echo -ne "${AMARELO}INFORME UMA OPÇAO: ${SEM_COR}"
-                read xray_opcao
-
-                case $xray_opcao in
-                    1|01)
-                        clear
-                        echo -e "${VERDE}=== GERENCIAR USUÁRIOS E UUID ===${SEM_COR}"
-                        echo "Acessando banco de dados de credenciais Xray..."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    2|02)
-                        clear
-                        echo -e "${VERDE}=== ALTERAR IP DO SERVIDOR XRAY ===${SEM_COR}"
-                        echo "Redirecionando tráfego IP..."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    3|03)
-                        clear
-                        echo -e "${VERDE}=== ALTERAR SNI (Server Name Indication) ===${SEM_COR}"
-                        echo "Modificando cabeçalhos de camuflagem do Xray..."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    4|04)
-                        clear
-                        echo -e "${VERDE}=== ALTERAR HOST / CDN ===${SEM_COR}"
-                        echo "Configurando Host Cloudflare/Cloudfront..."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    5|05)
-                        clear
-                        echo -e "${VERDE}=== EXIBIR PRESET ATUAL ===${SEM_COR}"
-                        echo "Buscando arquivo config.json do Xray..."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    6|06)
-                        clear
-                        echo -e "${AMARELO}=== REINICIANDO CORE DO XRAY ===${SEM_COR}"
-                        systemctl restart xray >/dev/null 2>&1 || echo "Xray não instalado ou não encontrado."
-                        echo -e "${VERDE}Comando executado!${SEM_COR}"
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    7|07)
-                        clear
-                        echo -e "${VERMELHO}=== REMOVER XRAY COMPLETO ===${SEM_COR}"
-                        echo "Aviso: Isso apagará os binários e portas do Xray."
-                        echo -ne "\nPressione Enter para retornar..."; read
-                        ;;
-                    0|00)
-                        break
-                        ;;
-                    *)
-                        echo -e "${VERMELHO}Opção inválida!${SEM_COR}"
-                        sleep 1
-                        ;;
-                esac
-            done
+            clear
+            echo -e "${VERDE}=== GERENCIAR CHAVES (FUNÇÃO ORIGINAL) ===${SEM_COR}"
+            echo "Aqui roda a sua função normal de backup/chaves do menu principal."
+            echo -ne "\nPressione Enter para retornar..."; read
             ;;
         12)
             while true; do
@@ -237,9 +246,8 @@ while true; do
                         echo -ne "\nPressione Enter para retornar..."; read
                         ;;
                     11)
-                        # Redireciona diretamente para o laço de repetição do XRAY que criamos acima
-                        opcao=11
-                        break
+                        # Chama a função isolada da tela do Xray (Não quebra mais o menu principal)
+                        funcao_menu_xray
                         ;;
                     12)
                         clear
