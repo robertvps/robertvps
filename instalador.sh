@@ -22,7 +22,7 @@ cd $HOME
 _atualizar_script() {
     echo -e "\n\033[1;36m[+] Verificando atualizações no seu GitHub ($USUARIO_GITHUB)...\033[0m"
     
-    # Baixa a versão mais recente do instalador do seu próprio github temporariamente
+    # Baixa a versão mais recente do instalador temporariamente
     wget -q -O $HOME/instalador.tmp "$URL_RAW/instalador.sh"
     
     if [ $? -eq 0 ] && [ -s $HOME/instalador.tmp ]; then
@@ -43,7 +43,7 @@ echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━�
 echo -e "\E[38;5;118m        ⇱ GERENCIADOR ROBERT.VPS ATUALIZADO ⇲               "
 echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo ""
-echo -e "               \033[1;32mINSTALADOR LEGÍTIMO E AUTÔNOMO\033[0m"
+echo -e "                \033[1;32mINSTALADOR LEGÍTIMO E AUTÔNOMO\033[0m"
 echo ""
 echo -e "\033[1;31m• \033[1;37mInstalação de ferramentas de gerenciamento VPS\033[0m"
 echo -e "\033[1;31m• \033[1;37mAuto-atualização via GitHub habilitada.\033[0m"
@@ -52,13 +52,29 @@ echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 echo -ne "\033[38;5;118mENTER \033[1;37mpara continuar a \033[1;31mINSTALAÇÃO : \033[0m"; read x
-[[ $x = @(n|N) ]] && exit
+[[ "$x" = @(n|N) ]] && exit
+
+clear
+echo -e "\033[1;32m[+] ATUALIZANDO O SISTEMA (Aguarde...)\033[0m"
+apt-get update -y > /dev/null 2>&1
+apt-get install lolcat figlet curl git boxes lsb-release -y > /dev/null 2>&1
+
+echo -e "\033[1;32m[+] INSTALANDO DEPENDÊNCIAS PYTHON ESSENCIAIS...\033[0m"
+apt install pip python3-pip uuid-runtime socat python3 -y > /dev/null 2>&1
+
+_pacotes=("bc" "screen" "nano" "unzip" "lsof" "netstat" "net-tools" "dos2unix" "nload" "jq" "firewalld")
+for _prog in ${_pacotes[@]}; do
+    echo -e "    -> Instalando ferramenta: $_prog"
+    apt install $_prog -y > /dev/null 2>&1
+done
+
+pip install speedtest-cli --break-system-packages > /dev/null 2>&1
 
 # Sincronizando e baixando os menus principais do seu próprio repositório
 echo -e "\n\033[1;33m[+] Baixando componentes do seu repositório...\033[0m"
-cd /bin/ > /dev/null 2>&1
+mkdir -p /bin/vps_modulos > /dev/null 2>&1
 
-# Aqui ele baixa o seu menu visual (instalar.sh) e salva como 'menu'
+# Aqui ele baixa o seu menu visual (instalar.sh do git) e salva como o comando global 'menu'
 wget -O /bin/menu "$URL_RAW/instalar.sh" > /dev/null 2>&1
 chmod +x /bin/menu > /dev/null 2>&1
 
@@ -67,7 +83,7 @@ echo "/bin/menu" > /bin/h && chmod +x /bin/h > /dev/null 2>&1
 cd $HOME
 
 # Gerenciamento de Base de Dados Existente
-[[ -f "$HOME/usuarios.db" ]] && {
+if [[ -f "$HOME/usuarios.db" ]]; then
     clear
     echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo -e "                    \033[1;37m• \033[1;31mATENÇÃO \033[1;37m• "
@@ -80,27 +96,11 @@ cd $HOME
     echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
     echo ""
     tput setaf 2 ; tput bold ; read -p "Opção ?: " -e -i 1 optiondb ; tput sgr0
-} || {
+else
     awk -F : '$3 >= 500 { print $1 " 1" }' /etc/passwd | grep -v '^nobody' > $HOME/usuarios.db
-}
+fi
 
 [[ "$optiondb" = '2' ]] && awk -F : '$3 >= 500 { print $1 " 1" }' /etc/passwd | grep -v '^nobody' > $HOME/usuarios.db
-
-clear
-echo -e "\033[1;32m[+] ATUALIZANDO O SISTEMA (Aguarde...)\033[0m"
-apt-get update -y > /dev/null 2>&1
-apt-get install lolcat figlet curl git boxes -y > /dev/null 2>&1
-
-echo -e "\033[1;32m[+] INSTALANDO DEPENDÊNCIAS PYTHON ESSENCIAIS...\033[0m"
-apt install pip python3-pip uuid-runtime socat python3 -y > /dev/null 2>&1
-
-_pacotes=("bc" "screen" "nano" "unzip" "lsof" "netstat" "net-tools" "dos2unix" "nload" "jq" "firewalld")
-for _prog in ${_pacotes[@]}; do
-    echo -e "    -> Instalando ferramenta: $_prog"
-    apt install $_prog -y > /dev/null 2>&1
-done
-
-pip install speedtest-cli > /dev/null 2>&1
 
 echo -e "\033[1;32m[+] CONFIGURANDO PORTAS E REGRAS DE FIREWALL...\033[0m"
 [[ -f "/usr/sbin/ufw" ]] && { ufw allow 443/tcp; ufw allow 80/tcp; ufw allow 3128/tcp; ufw allow 8799/tcp; ufw allow 8080/tcp; } > /dev/null 2>&1
@@ -125,7 +125,7 @@ echo 'echo -e "\033[1;32m DIGITE : \033[1;31mmenu\033[1;37m"' >>/root/.bashrc
 echo 'echo -e ""' >>/root/.bashrc
 
 date=$(date '+%Y-%m-%d <> %H:%M:%S')
-echo -e "\033[1;37m Servidor                           $date"
+echo -e "\033[1;37m Servidor                            $date"
 echo -e "\033[1;37m                INSTALACAO CONCLUIDA                \033[1;33m "
 echo -e "\033[1;33mPARA INICIAR DIGITE: \033[1;36mmenu\033[1;33m E DÊ ENTER \033[0m"
 
