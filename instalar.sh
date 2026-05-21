@@ -1,22 +1,38 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT 100% CORRIGIDO E REVISADO - ROBERT.GARCIA
+# SCRIPT COMPLETO COM AUTO-INSTALADOR - ROBERT.GARCIA
 # ========================================================
 
 VERMELHO='\033[1;31m'
 VERDE='\033[1;32m'
 AMARELO='\033[1;33m'
 AZUL='\033[1;34m'
-CENARIO='\033[1;36m'
 BRANCO='\033[1;37m'
 PRETO='\033[1;30m'
 SEM_COR='\033[0m'
+
+# [AUTO-INSTALADOR] Garante que todas as ferramentas do sistema funcionem
+garantir_ferramentas() {
+    local atualizar=0
+    for pacote in net-tools speedtest-cli nload screen; do
+        if ! command -v $pacote &>/dev/null && ! dpkg -s $pacote &>/dev/null; then
+            if [[ "$atualizar" -eq 0 ]]; then
+                echo -e "${AMARELO}[+] Preparando o sistema para ativar todas as opções...${SEM_COR}"
+                apt-get update -y >/dev/null 2>&1
+                atualizar=1
+            fi
+            echo -e "${VERDE}[+] Ativando recurso para a opção: $pacote...${SEM_COR}"
+            apt-get install $pacote -y >/dev/null 2>&1
+        fi
+    done
+}
+garantir_ferramentas
 
 DATABASE="/root/usuarios.db"
 [[ ! -f "$DATABASE" ]] && touch "$DATABASE"
 
 while true; do
-    # Coleta dinamica leve
+    # Coleta dinamica leve para o painel
     OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
     OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
     RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
@@ -75,8 +91,8 @@ while true; do
             
             sed -i "/^$usser /d" "$DATABASE"
             echo "$usser $llimite $expira" >> "$DATABASE"
-            echo -e "\n${VERDE}Usuário $usser criado! Vencimento: $expira Limite: $llimite${SEM_COR}"
-            sleep 3
+            echo -e "\n${VERDE}Usuário $usser criado com sucesso!${SEM_COR}"
+            sleep 2
             ;;
         2|02)
             clear
@@ -94,8 +110,8 @@ while true; do
             echo "$usser $llimite $expira" >> "$DATABASE"
             
             (sleep 3600 && userdel -f "$usser" && sed -i "/^$usser /d" "$DATABASE") & >/dev/null 2>&1
-            echo -e "\n${VERDE}Teste criado com sucesso! Ele sumirá em 1 hora.${SEM_COR}"
-            sleep 3
+            echo -e "\n${VERDE}Teste criado! Ele sumirá automaticamente em 1 hora.${SEM_COR}"
+            sleep 2
             ;;
         3|03)
             clear
@@ -115,15 +131,14 @@ while true; do
             clear
             echo -e "${VERDE}=== RENOVAR USUÁRIO ===${SEM_COR}"
             read -p "Nome do Usuário: " usser
-            read -p "Adicionar quantos dias de acesso?: " ddias
+            read -p "Adicionar quantos dias?: " ddias
             expira=$(date -d "+$ddias days" +%Y-%m-%d)
-            chage -E "$expira" "$usser"
+            chage -E "$expira" "$usser" >/dev/null 2>&1
             
             limite_antigo=$(grep -w "$usser" "$DATABASE" | awk '{print $2}')
             [[ -z "$limite_antigo" ]] && limite_antigo="1"
             sed -i "/^$usser /d" "$DATABASE"
             echo "$usser $limite_antigo $expira" >> "$DATABASE"
-            
             echo -e "${VERDE}Renovado com sucesso até $expira!${SEM_COR}"
             sleep 2
             ;;
@@ -141,15 +156,16 @@ while true; do
             clear
             echo -e "${VERDE}=== ALTERAR DATA MANUAL ===${SEM_COR}"
             read -p "Nome do Usuário: " usser
-            read -p "Nova Data (ANO-MES-DIA / Ex: 2026-12-31): " ndata
-            chage -E "$ndata" "$usser"
-            sleep 1
+            read -p "Nova Data (Ex: 2026-12-31): " ndata
+            chage -E "$ndata" "$usser" >/dev/null 2>&1
+            echo -e "${VERDE}Data alterada com sucesso!${SEM_COR}"
+            sleep 2
             ;;
         7|07)
             clear
             echo -e "${VERDE}=== ALTERAR LIMITE SIMULTÂNEO ===${SEM_COR}"
             read -p "Nome do Usuário: " usser
-            read -p "Novo Limite de telas: " nlimite
+            read -p "Novo Limite: " nlimite
             data_salva=$(grep -w "$usser" "$DATABASE" | awk '{print $3}')
             [[ -z "$data_salva" ]] && data_salva=$(date -d "+30 days" +%Y-%m-%d)
             sed -i "/^$usser /d" "$DATABASE"
@@ -161,7 +177,7 @@ while true; do
             clear
             echo -e "${VERDE}=== ALTERAR SENHA ===${SEM_COR}"
             read -p "Nome do Usuário: " usser
-            read -p "Nova Senha desejada: " nsenha
+            read -p "Nova Senha: " nsenha
             echo "$usser:$nsenha" | chpasswd
             echo -e "${VERDE}Senha modificada!${SEM_COR}"
             sleep 2
@@ -177,7 +193,7 @@ while true; do
                     venc_sec=$(date -d "$d" +%s 2>/dev/null)
                     if [[ "$venc_sec" -lt "$hoje" ]]; then
                         echo "Removendo expirado: $u"
-                        userdel -f "$u"
+                        userdel -f "$u" >/dev/null 2>&1
                         sed -i "/^$u /d" "$DATABASE"
                     fi
                 fi
@@ -207,6 +223,7 @@ while true; do
         12)
             clear
             echo -e "${VERDE}=== OPÇÕES DE CONEXÃO ATIVAS ===${SEM_COR}"
+            # netstat agora garantido pelo auto-instalador
             netstat -tlpn | grep -E "sshd|dropbear|badvpn"
             echo -ne "\nPressione Enter para voltar..."; read
             ;;
@@ -226,26 +243,21 @@ while true; do
         15)
             clear
             echo -e "${VERDE}=== MONITOR DE TRÁFEGO ===${SEM_COR}"
-            if command -v nload &>/dev/null; then
-                nload
-            else
-                echo "Exibindo estatísticas de rede:"
-                ip -s link
-                echo -ne "\nPressione Enter para voltar..."; read
-            fi
+            nload
             ;;
         16)
             clear
             echo -e "${VERDE}=== STATUS DO FIREWALL ===${SEM_COR}"
-            ufw status 2>/dev/null || echo "Firewall padrão liberado (Sem travas externas)."
+            ufw status 2>/dev/null || echo "Firewall padrão liberado."
             echo -ne "\nPressione Enter para voltar..."; read
             ;;
         17)
             clear
             echo -e "${VERDE}=== INFORMAÇÕES DETALHADAS DO SERVIDOR ===${SEM_COR}"
-            uname -a
-            echo "Uptime: $(uptime -p)"
-            df -h /
+            echo -e "Processador: $(lscpu | grep 'Model name' | cut -d: -f2 | xargs)"
+            echo -e "Uptime (Tempo Online): $(uptime -p)"
+            echo -e "Uso do Disco Principal:"
+            df -h / | tail -n 1 | awk '{print "Total: " $2 " | Usado: " $3 " | Livre: " $4 " (" $5 ")"}'
             echo -ne "\nPressione Enter para voltar..."; read
             ;;
         18)
@@ -298,7 +310,7 @@ while true; do
             clear
             echo -e "${VERDE}====================================================${SEM_COR}"
             echo -e "           GERENCIADOR OFICIAL - ROBERT GARCIA      "
-            echo -e "       Versão 1.0 Totalmente Autônoma e Corrigida  "
+            echo -e "       Versão 1.1 Totalmente Autônoma e Corrigida  "
             echo -e "===================================================="
             echo -ne "\nPressione Enter para voltar..."; read
             ;;
