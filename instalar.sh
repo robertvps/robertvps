@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT FOCO TOTAL NA OPÇÃO 12 E SEUS SUB-MENUS
+# SCRIPT OPÇÃO 12 - DESIGN 100% CORRIGIDO E ALINHADO
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -63,17 +63,15 @@ while true; do
 
     case $opcao in
         1|01|2|02|3|03|4|04|5|05|6|06|7|07|8|08|9|09|10|11|13|14|15|16|17|18|19|20|21|22|23)
-            # Travado temporariamente para mantermos o foco total na 12
             clear
             echo -e "${AMARELO}Aviso: Estamos focando apenas na OPÇÃO 12 agora! Escolha a 12.${SEM_COR}"
             sleep 2
             ;;
         12)
-            # Início do Loop do Sub-Menu das Opções de Conexão
             while true; do
                 clear
                 echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
-                echo -e "${AZUL}│${SEM_COR}         ${VERDE}█▓▒░${BRANCO} SUB-MENU: OPÇÕES DE CONEXÃO ${VERDE}░▒▓█${SEM_COR}      ${AZUL}│${SEM_COR}"
+                echo -e "${AZUL}│${SEM_COR}         ${VERDE}█▓▒░${BRANCO} SUB-MENU: OPÇÕES DE CONEXÃO ${VERDE}░▒▓█${SEM_COR}       ${AZUL}│${SEM_COR}"
                 echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
                 printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 1 "VER PORTAS E CONEXÕES ATIVAS"
                 printf "${AZUL}│${PRETO}[${BRANCO}%02d${PRETO}]${AZUL} • ${VERDE}%-43s${AZUL}│\n" 2 "ALTERAR PORTA DO OPENSSH (PADRÃO)"
@@ -103,7 +101,6 @@ while true; do
                         echo -ne "${AMARELO}Digite a nova porta desejada (Ex: 443, 2222): ${SEM_COR}"
                         read nova_porta
                         if [[ "$nova_porta" =~ ^[0-9]+$ ]]; then
-                            # Altera ou adiciona a nova porta no arquivo do SSH
                             sed -i "s/^#Port .*/Port $nova_porta/g" /etc/ssh/sshd_config
                             sed -i "s/^Port .*/Port $nova_porta/g" /etc/ssh/sshd_config
                             systemctl restart sshd ssh >/dev/null 2>&1
@@ -128,7 +125,6 @@ while true; do
                         echo -ne "${AMARELO}Pressione Enter para retornar ao Sub-Menu...${SEM_COR}"; read
                         ;;
                     4|04)
-                        # Sai do laço interno do sub-menu e volta automaticamente para o painel principal
                         break
                         ;;
                     *)
