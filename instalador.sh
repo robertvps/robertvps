@@ -1,8 +1,7 @@
-cat << 'EOF' > $HOME/instalador.sh
 #!/bin/bash
 clear
 
-# Configurações do seu Repositório (Onde o script vai se atualizar)
+# Configurações do seu Repositório
 USUARIO_GITHUB="robertvps"
 REPOSITORIO="robertvps"
 BRANCH="main"
@@ -11,32 +10,10 @@ URL_RAW="https://raw.githubusercontent.com/$USUARIO_GITHUB/$REPOSITORIO/$BRANCH"
 # Verificar se o usuário é root
 [[ "$(whoami)" != "root" ]] && {
     echo -e "\033[1;37m[\033[1;31mErro\033[1;37m] - Você precisa executar como root\033[0m"
-    rm -f $HOME/instalador.sh > /dev/null 2>&1; exit 0
+    exit 1
 }
 
 cd $HOME
-
-# ==========================================
-# FUNÇÃO DE AUTO-ATUALIZAÇÃO
-# ==========================================
-_atualizar_script() {
-    echo -e "\n\033[1;36m[+] Verificando atualizações no seu GitHub ($USUARIO_GITHUB)...\033[0m"
-    
-    # Baixa a versão mais recente do instalador temporariamente
-    wget -q -O $HOME/instalador.tmp "$URL_RAW/instalador.sh"
-    
-    if [ $? -eq 0 ] && [ -s $HOME/instalador.tmp ]; then
-        mv $HOME/instalador.tmp $HOME/instalador.sh
-        chmod +x $HOME/instalador.sh
-        echo -e "\033[1;32m[+] O Script foi atualizado com sucesso para a última versão!\033[0m"
-    else
-        rm -f $HOME/instalador.tmp
-        echo -e "\033[1;31m[-] Não foi possível buscar atualizações. Mantendo versão atual.\033[0m"
-    fi
-}
-
-# Executa a checagem de atualização assim que inicia
-_atualizar_script
 
 # Tela de Boas-Vindas Personalizada
 echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
@@ -46,13 +23,12 @@ echo ""
 echo -e "                \033[1;32mINSTALADOR LEGÍTIMO E AUTÔNOMO\033[0m"
 echo ""
 echo -e "\033[1;31m• \033[1;37mInstalação de ferramentas de gerenciamento VPS\033[0m"
-echo -e "\033[1;31m• \033[1;37mAuto-atualização via GitHub habilitada.\033[0m"
 echo ""
 echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
 echo ""
 
 echo -ne "\033[38;5;118mENTER \033[1;37mpara continuar a \033[1;31mINSTALAÇÃO : \033[0m"; read x
-[[ "$x" = @(n|N) ]] && exit
+[[ "$x" = @(n|N) ]] && exit 1
 
 clear
 echo -e "\033[1;32m[+] ATUALIZANDO O SISTEMA (Aguarde...)\033[0m"
@@ -70,11 +46,11 @@ done
 
 pip install speedtest-cli --break-system-packages > /dev/null 2>&1
 
-# Sincronizando e baixando os menus principais do seu próprio repositório
+# Sincronizando e baixando o menu corrigido do seu repositório
 echo -e "\n\033[1;33m[+] Baixando componentes do seu repositório...\033[0m"
 mkdir -p /bin/vps_modulos > /dev/null 2>&1
 
-# Aqui ele baixa o seu menu visual (instalar.sh do git) e salva como o comando global 'menu'
+# Baixa o seu 'instalar.sh' do git e joga pra pasta global como 'menu'
 wget -O /bin/menu "$URL_RAW/instalar.sh" > /dev/null 2>&1
 chmod +x /bin/menu > /dev/null 2>&1
 
@@ -84,23 +60,8 @@ cd $HOME
 
 # Gerenciamento de Base de Dados Existente
 if [[ -f "$HOME/usuarios.db" ]]; then
-    clear
-    echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "                    \033[1;37m• \033[1;31mATENÇÃO \033[1;37m• "
-    echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "\033[1;37mUma base de Dados de Usuários \033[1;32m(usuarios.db) \033[1;37mFoi Encontrada!\033[0m"
-    echo -e "Deseja mantê-la preservando o limite de Conexões simultâneas?"
-    echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo -e "[\033[1;31m1\033[1;37m] Manter Base de Dados Atual"
-    echo -e "[\033[1;31m2\033[1;37m] Criar uma Nova Base de Dados"
-    echo -e "\033[1;37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
-    echo ""
-    tput setaf 2 ; tput bold ; read -p "Opção ?: " -e -i 1 optiondb ; tput sgr0
-else
     awk -F : '$3 >= 500 { print $1 " 1" }' /etc/passwd | grep -v '^nobody' > $HOME/usuarios.db
 fi
-
-[[ "$optiondb" = '2' ]] && awk -F : '$3 >= 500 { print $1 " 1" }' /etc/passwd | grep -v '^nobody' > $HOME/usuarios.db
 
 echo -e "\033[1;32m[+] CONFIGURANDO PORTAS E REGRAS DE FIREWALL...\033[0m"
 [[ -f "/usr/sbin/ufw" ]] && { ufw allow 443/tcp; ufw allow 80/tcp; ufw allow 3128/tcp; ufw allow 8799/tcp; ufw allow 8080/tcp; } > /dev/null 2>&1
@@ -109,7 +70,7 @@ clear
 echo ""
 cd $HOME
 
-# Customizando o seu terminal (.bashrc) para exibir sua marca ao logar na VPS
+# Customizando o seu terminal (.bashrc)
 cat /dev/null > /root/.bashrc
 echo "clear" >> /root/.bashrc
 echo 'DATE=$(date +"%d-%m-%y")' >>/root/.bashrc
@@ -130,6 +91,3 @@ echo -e "\033[1;37m                INSTALACAO CONCLUIDA                \033[1;33
 echo -e "\033[1;33mPARA INICIAR DIGITE: \033[1;36mmenu\033[1;33m E DÊ ENTER \033[0m"
 
 rm -f $HOME/instalador.sh && cat /dev/null > ~/.bash_history && history -c
-EOF
-chmod +x $HOME/instalador.sh
-$HOME/instalador.sh
