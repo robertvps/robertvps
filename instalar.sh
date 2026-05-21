@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT REVISADO E TOTALMENTE OPERACIONAL - ROBERT.GARCIA
+# SCRIPT 100% CORRIGIDO E REVISADO - ROBERT.GARCIA
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -16,7 +16,7 @@ DATABASE="/root/usuarios.db"
 [[ ! -f "$DATABASE" ]] && touch "$DATABASE"
 
 while true; do
-    # Coleta dinâmica leve
+    # Coleta dinamica leve
     OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
     OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
     RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
@@ -70,7 +70,6 @@ while true; do
             read -p "Limite de Conexões (Ex: 1): " llimite
             
             expira=$(date -d "+$ddias days" +%Y-%m-%d)
-            # Criando com shell desativado para segurança SSH vpn
             useradd -M -s /bin/false -e "$expira" "$usser" >/dev/null 2>&1
             echo "$usser:$ssenha" | chpasswd >/dev/null 2>&1
             
@@ -94,7 +93,6 @@ while true; do
             sed -i "/^$usser /d" "$DATABASE"
             echo "$usser $llimite $expira" >> "$DATABASE"
             
-            # Comando de autodeleção em segundo plano (atrás de 1 hora)
             (sleep 3600 && userdel -f "$usser" && sed -i "/^$usser /d" "$DATABASE") & >/dev/null 2>&1
             echo -e "\n${VERDE}Teste criado com sucesso! Ele sumirá em 1 hora.${SEM_COR}"
             sleep 3
@@ -121,7 +119,6 @@ while true; do
             expira=$(date -d "+$ddias days" +%Y-%m-%d)
             chage -E "$expira" "$usser"
             
-            # Atualiza na base
             limite_antigo=$(grep -w "$usser" "$DATABASE" | awk '{print $2}')
             [[ -z "$limite_antigo" ]] && limite_antigo="1"
             sed -i "/^$usser /d" "$DATABASE"
@@ -194,9 +191,10 @@ while true; do
             echo -e "--------------------------------------------------"
             printf "%-15s %-15s %-10s\n" "USUÁRIO" "VENCIMENTO" "LIMITE"
             echo -e "--------------------------------------------------"
-            cat "$DATABASE" | while read -r u l d; do
+            while read -r u l d; do
+                [[ -z "$u" ]] && continue
                 printf "%-15s %-15s %-10s\n" "$u" "$d" "$l"
-            done
+            done < "$DATABASE"
             echo -e "--------------------------------------------------"
             echo -ne "\nPressione Enter para voltar..."; read
             ;;
@@ -260,15 +258,14 @@ while true; do
             clear
             echo -e "${VERDE}=== SISTEMA DE VALIDAÇÃO DE LIMITES ===${SEM_COR}"
             echo "Analisando conexões em tempo real..."
-            # Derruba se passar do limite cadastrado na DB
-            cat "$DATABASE" | while read -r u_name u_max u_exp; do
+            while read -r u_name u_max u_exp; do
                 [[ -z "$u_name" ]] && continue
                 conectados=$(ps aux | grep -E "sshd: $u_name" | grep -v grep | wc -l)
-                if (( conectados > u_max ]]; then
+                if (( conectados > u_max )); then
                      echo "Usuário $u_name ultrapassou o limite ($conectados/$u_max). Desconectando..."
                      pkill -u "$u_name" -f "sshd:"
                 fi
-            done
+            done < "$DATABASE"
             echo "Concluído!"
             sleep 2
             ;;
