@@ -1,6 +1,6 @@
 #!/bin/bash
 # ========================================================
-# SCRIPT COMPLETO COM AUTO-INSTALADOR - ROBERT.GARCIA
+# SCRIPT 100% CORRIGIDO COM RETORNO AO MENU - ROBERT.GARCIA
 # ========================================================
 
 VERMELHO='\033[1;31m'
@@ -11,18 +11,13 @@ BRANCO='\033[1;37m'
 PRETO='\033[1;30m'
 SEM_COR='\033[0m'
 
-# [AUTO-INSTALADOR] Garante que todas as ferramentas do sistema funcionem
+# Auto-instalador silencioso de dependências
 garantir_ferramentas() {
-    local atualizar=0
     for pacote in net-tools speedtest-cli nload screen; do
         if ! command -v $pacote &>/dev/null && ! dpkg -s $pacote &>/dev/null; then
-            if [[ "$atualizar" -eq 0 ]]; then
-                echo -e "${AMARELO}[+] Preparando o sistema para ativar todas as opções...${SEM_COR}"
-                apt-get update -y >/dev/null 2>&1
-                atualizar=1
-            fi
-            echo -e "${VERDE}[+] Ativando recurso para a opção: $pacote...${SEM_COR}"
+            apt-get update -y >/dev/null 2>&1
             apt-get install $pacote -y >/dev/null 2>&1
+            break
         fi
     done
 }
@@ -32,7 +27,6 @@ DATABASE="/root/usuarios.db"
 [[ ! -f "$DATABASE" ]] && touch "$DATABASE"
 
 while true; do
-    # Coleta dinamica leve para o painel
     OS_VERSAO=$(lsb_release -si 2>/dev/null || echo "Ubuntu")
     OS_RELEASE=$(lsb_release -sr 2>/dev/null || echo "22.04")
     RAM_TOTAL=$(free -h | awk '/^Mem:/ {print $2}')
@@ -84,11 +78,9 @@ while true; do
             read -p "Senha do Usuário: " ssenha
             read -p "Dias de validade (Ex: 30): " ddias
             read -p "Limite de Conexões (Ex: 1): " llimite
-            
             expira=$(date -d "+$ddias days" +%Y-%m-%d)
             useradd -M -s /bin/false -e "$expira" "$usser" >/dev/null 2>&1
             echo "$usser:$ssenha" | chpasswd >/dev/null 2>&1
-            
             sed -i "/^$usser /d" "$DATABASE"
             echo "$usser $llimite $expira" >> "$DATABASE"
             echo -e "\n${VERDE}Usuário $usser criado com sucesso!${SEM_COR}"
@@ -101,14 +93,11 @@ while true; do
             [[ -z "$usser" ]] && continue
             read -p "Senha do Teste: " ssenha
             read -p "Limite de Conexões: " llimite
-            
             expira=$(date -d "+1 day" +%Y-%m-%d)
             useradd -M -s /bin/false -e "$expira" "$usser" >/dev/null 2>&1
             echo "$usser:$ssenha" | chpasswd >/dev/null 2>&1
-            
             sed -i "/^$usser /d" "$DATABASE"
             echo "$usser $llimite $expira" >> "$DATABASE"
-            
             (sleep 3600 && userdel -f "$usser" && sed -i "/^$usser /d" "$DATABASE") & >/dev/null 2>&1
             echo -e "\n${VERDE}Teste criado! Ele sumirá automaticamente em 1 hora.${SEM_COR}"
             sleep 2
@@ -134,7 +123,6 @@ while true; do
             read -p "Adicionar quantos dias?: " ddias
             expira=$(date -d "+$ddias days" +%Y-%m-%d)
             chage -E "$expira" "$usser" >/dev/null 2>&1
-            
             limite_antigo=$(grep -w "$usser" "$DATABASE" | awk '{print $2}')
             [[ -z "$limite_antigo" ]] && limite_antigo="1"
             sed -i "/^$usser /d" "$DATABASE"
@@ -212,26 +200,25 @@ while true; do
                 printf "%-15s %-15s %-10s\n" "$u" "$d" "$l"
             done < "$DATABASE"
             echo -e "--------------------------------------------------"
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         11)
             clear
             echo -e "${VERDE}=== CHAVES HOST DO SISTEMA ===${SEM_COR}"
             cat /etc/ssh/ssh_host_rsa_key.pub 2>/dev/null || echo "Gerando chaves padrões rsa..."
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         12)
             clear
             echo -e "${VERDE}=== OPÇÕES DE CONEXÃO ATIVAS ===${SEM_COR}"
-            # netstat agora garantido pelo auto-instalador
             netstat -tlpn | grep -E "sshd|dropbear|badvpn"
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         13)
             clear
             echo -e "${VERDE}Executando Teste de Velocidade Oficial...${SEM_COR}"
             speedtest-cli --secure
-            echo -ne "\nPressione Enter para retornar..."; read
+            echo -ne "\nPressione Enter para retornar ao menu..."; read
             ;;
         14)
             clear
@@ -249,7 +236,7 @@ while true; do
             clear
             echo -e "${VERDE}=== STATUS DO FIREWALL ===${SEM_COR}"
             ufw status 2>/dev/null || echo "Firewall padrão liberado."
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         17)
             clear
@@ -258,13 +245,13 @@ while true; do
             echo -e "Uptime (Tempo Online): $(uptime -p)"
             echo -e "Uso do Disco Principal:"
             df -h / | tail -n 1 | awk '{print "Total: " $2 " | Usado: " $3 " | Livre: " $4 " (" $5 ")"}'
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         18)
             clear
             echo -e "${VERDE}=== BANNER DO SCRIPT ===${SEM_COR}"
             echo "Para editar a mensagem de entrada edite o arquivo /etc/issue.net"
-            echo -ne "\nPressione Enter para sair..."; read
+            echo -ne "\nPressione Enter para sair do menu..."; read
             ;;
         19)
             clear
@@ -304,15 +291,15 @@ while true; do
             clear
             echo -e "${VERDE}=== MODULO CHATBOT CONFIGURADO ===${SEM_COR}"
             echo "Módulo estruturado e aguardando token de APIs."
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         23)
             clear
             echo -e "${VERDE}====================================================${SEM_COR}"
             echo -e "           GERENCIADOR OFICIAL - ROBERT GARCIA      "
-            echo -e "       Versão 1.1 Totalmente Autônoma e Corrigida  "
+            echo -e "       Versão 1.2 Totalmente Autônoma e Corrigida  "
             echo -e "===================================================="
-            echo -ne "\nPressione Enter para voltar..."; read
+            echo -ne "\nPressione Enter para voltar ao menu..."; read
             ;;
         0|00)
             clear
