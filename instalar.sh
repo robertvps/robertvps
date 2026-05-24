@@ -55,7 +55,7 @@ funcao_menu_xray() {
 
         clear
         echo -e "${AZUL}┌────────────────────────────────────────────────────────┐${SEM_COR}"
-        echo -e "${AZUL}│${BG_VERMELHO}                       XRAY (Beta)                      ${SEM_COR}${AZUL}│${SEM_COR}"
+        echo -e "${AZUL}│${BG_VERMELHO}                        XRAY (Beta)                     ${SEM_COR}${AZUL}│${SEM_COR}"
         echo -e "${AZUL}├────────────────────────────────────────────────────────┤${SEM_COR}"
         printf "${AZUL}│ ${VERDE}PORTA(s):${BRANCO} %-45s${AZUL}│\n" "$XRAY_PORTS"
         echo -e "${AZUL}│                                                        │${SEM_COR}"
@@ -85,10 +85,10 @@ funcao_menu_xray() {
                     echo -ne "Digite o nome do usuário: "
                     read novo_nome
                     [[ -z "$novo_nome" ]] && continue
-                    novo_uuid=$(uuidgen)
+                    novo_uuid=$(uuidgen 2>/dev/null || cat /proc/sys/kernel/random/uuid)
                     
-                    # Insere o novo cliente no config.json usando o jq
-                    jq ".inbounds[0].settings.clients += [{\"id\": \"$novo_uuid\", \"email\": \"$novo_nome\"}]" "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                    # Insere o novo cliente de forma correta no JSON usando argumentos estáveis do jq
+                    jq --arg id "$novo_uuid" --arg email "$novo_nome" '.inbounds[0].settings.clients += [{id: $id, email: $email}]' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
                     systemctl restart xray >/dev/null 2>&1
                     
                     echo -e "\n${VERDE}Usuário adicionado com sucesso!${SEM_COR}"
@@ -96,63 +96,78 @@ funcao_menu_xray() {
                     echo -e "${AMARELO}UUID:${BRANCO} $novo_uuid"
                 elif [[ "$op_user" == "2" ]]; then
                     echo -e "\n--- CLIENTES ATIVOS NO XRAY ---"
-                    jq -r '.inbounds[0].settings.clients[] | "Usuário: \(.email) | UUID: \(.id)"' "$XRAY_CONFIG" 2>/dev/null || echo "Nenhum usuário encontrado."
+                    jq -r '.inbounds[0].settings.clients[] | "Usuário: \(.email) | UUID: \(.id)"' "$XRAY_CONFIG" 2>/dev/null || echo "Nenhum usuário cadastrado."
                 elif [[ "$op_user" == "3" ]]; then
-                    echo -ne "Digite o nome do usuário a remover: "
+                    echo -ne "Digite o nome exato do usuário a remover: "
                     read rem_nome
-                    jq "del(.inbounds[0].settings.clients[] | select(.email == \"$rem_nome\"))" "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
-                    systemctl restart xray >/dev/null 2>&1
-                    echo -e "${VERDE}Processo de remoção concluído!${SEM_COR}"
+                    if [[ ! -z "$rem_nome" ]]; then
+                        jq --arg email "$rem_nome" '.inbounds[0].settings.clients |= del(.[] | select(.email == $email))' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                        systemctl restart xray >/dev/null 2>&1
+                        echo -e "${VERDE}\nProcesso de remoção concluído!${SEM_COR}"
+                    fi
                 fi
                 echo -ne "\nPressione Enter para retornar..."; read
                 ;;
             2|02)
                 clear
                 echo -e "${VERDE}=== [02] ALTERAR IP DO SERVIDOR XRAY ===${SEM_COR}"
-                IP_ATUAL=$(curl -s http://checkip.amazonaws.com || echo "Não detectado")
-                echo -e "IP Público atual detectado da VPS: ${AMARELO}$IP_ATUAL${SEM_COR}"
+                local ip_detectado=$(jq -r '.inbounds[0].streamSettings.wsSettings.headers.Host // empty' "$XRAY_CONFIG")
+                [[ -z "$ip_detectado" ]] && ip_detectado=$(curl -s http://checkip.amazonaws.com || echo "Não detectado")
+                echo -e "IP Público atual detectado da VPS: ${AMARELO}$ip_detectado${SEM_COR}"
                 echo -ne "Informe o novo IP ou domínio que deseja vincular (ou Enter para manter): "
                 read novo_ip_vps
                 if [[ ! -z "$novo_ip_vps" ]]; then
-                    echo -e "${VERDE}IP/Domínio definido temporariamente para exibição e links: $novo_ip_vps${SEM_COR}"
+                    jq --arg ip "$novo_ip_vps" '.inbounds[0].streamSettings.wsSettings += {headers: {Host: $ip}}' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                    echo -e "${VERDE}IP/Domínio definido com sucesso para: $novo_ip_vps${SEM_COR}"
+                    systemctl restart xray >/dev/null 2>&1
                 fi
-                echo -ne "\nPressione Enter para retornar..."; read
+                sleep 1.5
                 ;;
             3|03)
                 clear
                 echo -e "${VERDE}=== [03] ALTERAR SNI (Server Name Indication) ===${SEM_COR}"
-                # Captura ou define uma SNI padrão dentro das configurações de TLS se houver
-                echo -e "Camuflagem SNI ajuda a burlar bloqueios de operadoras."
+                local sni_atual=$(jq -r '.inbounds[0].sni_custom // "www.tim.com.br"' "$XRAY_CONFIG")
+                echo -e "SNI atual cadastrado: ${AMARELO}$sni_atual${SEM_COR}"
                 echo -ne "Informe a nova SNI fictícia (Ex: www.cloudflare.com): "
                 read nova_sni
                 if [[ ! -z "$nova_sni" ]]; then
-                    echo -e "${VERDE}SNI salva com sucesso! Configuração atualizada.${SEM_COR}"
+                    jq --arg sni "$nova_sni" '.inbounds[0] += {sni_custom: $sni}' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                    echo -e "${VERDE}SNI salva com sucesso! Configuração atualizada para: $nova_sni${SEM_COR}"
                 fi
-                echo -ne "\nPressione Enter para retornar..."; read
+                sleep 1.5
                 ;;
             4|04)
                 clear
                 echo -e "${VERDE}=== [04] ALTERAR HOST / CDN ===${SEM_COR}"
-                # Altera o Host Header / Path do WebSocket
-                PATH_ATUAL=$(jq -r '.inbounds[0].streamSettings.wsSettings.path' "$XRAY_CONFIG" 2>/dev/null || echo "/robertvps")
-                echo -e "Path (Caminho) WebSocket Atual: ${AMARELO}$PATH_ATUAL${SEM_COR}"
-                echo -ne "Informe o novo Path CDN (Ex: /seu_host): "
+                local host_atual=$(jq -r '.inbounds[0].host_cdn // "nasterweb.azion.app"' "$XRAY_CONFIG")
+                echo -e "Path (Caminho) WebSocket Atual: ${AMARELO}$(jq -r '.inbounds[0].streamSettings.wsSettings.path' "$XRAY_CONFIG" 2>/dev/null || echo "/robertvps")${SEM_COR}"
+                echo -e "HOST/CDN Atual cadastrado: ${AMARELO}$host_atual${SEM_COR}"
+                echo -ne "Informe o novo Host CDN (Ex: /seu_host): "
                 read novo_path
                 if [[ ! -z "$novo_path" ]]; then
-                    # Garante que começa com barra
                     [[ "$novo_path" != /* ]] && novo_path="/$novo_path"
-                    jq ".inbounds[0].streamSettings.wsSettings.path = \"$novo_path\"" "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                    jq --arg path "$novo_path" '.inbounds[0].streamSettings.wsSettings.path = $path' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
+                    # Salva também a tag de referência amigável do host cdn
+                    jq --arg cdn "$host_atual" '.inbounds[0] += {host_cdn: $cdn}' "$XRAY_CONFIG" > /tmp/xray_tmp.json && mv /tmp/xray_tmp.json "$XRAY_CONFIG"
                     systemctl restart xray >/dev/null 2>&1
                     echo -e "${VERDE}Path CDN atualizado para $novo_path e Xray reiniciado!${SEM_COR}"
                 fi
-                echo -ne "\nPressione Enter para retornar..."; read
+                sleep 1.5
                 ;;
             5|05)
                 clear
                 echo -e "${VERDE}=== [05] EXIBIR PRESET ATUAL ===${SEM_COR}"
-                echo -e "${AMARELO}Exibindo a estrutura interna do arquivo /usr/local/etc/xray/config.json:${SEM_COR}\n"
                 if [[ -f "$XRAY_CONFIG" ]]; then
-                    cat "$XRAY_CONFIG" | jq . 2>/dev/null || cat "$XRAY_CONFIG"
+                    local ip_addr=$(jq -r '.inbounds[0].streamSettings.wsSettings.headers.Host // "Não configurado"' "$XRAY_CONFIG")
+                    local sni_val=$(jq -r '.inbounds[0].sni_custom // "www.tim.com.br"' "$XRAY_CONFIG")
+                    local host_cdn=$(jq -r '.inbounds[0].host_cdn // "nasterweb.azion.app"' "$XRAY_CONFIG")
+                    local porta_tls=$(jq -r '.inbounds[0].port // "443"' "$XRAY_CONFIG")
+                    
+                    # Layout idêntico de 4 linhas exatas da VPS 2
+                    echo -e "\n${VERDE}IP/ADDRESS:${SEM_COR} $ip_addr"
+                    echo -e "${VERDE}SNI:${SEM_COR} $sni_val"
+                    echo -e "${VERDE}HOST/CDN:${SEM_COR} $host_cdn"
+                    echo -e "${VERDE}PORTA TLS:${SEM_COR} $porta_tls"
                 else
                     echo -e "${VERMELHO}Arquivo de configuração não encontrado!${SEM_COR}"
                 fi
@@ -165,7 +180,7 @@ funcao_menu_xray() {
                 if systemctl is-active --quiet xray; then
                     echo -e "${VERDE}O núcleo do Xray foi reiniciado e está ATIVO!${SEM_COR}"
                 fi
-                echo -ne "\nPressione Enter para retornar..."; read
+                sleep 1.5
                 ;;
             7|07)
                 clear
@@ -180,10 +195,10 @@ funcao_menu_xray() {
                     rm -f /usr/local/bin/xray
                     echo -e "${VERDE}Xray removido com sucesso!${SEM_COR}"
                 fi
-                echo -ne "\nPressione Enter para retornar..."; read
+                sleep 1.5
                 ;;
             0|00)
-                break # Sai da função do Xray e volta exatamente para a tela anterior
+                break 
                 ;;
             *)
                 echo -e "${VERMELHO}Opção inválida!${SEM_COR}"
@@ -337,7 +352,7 @@ while true; do
                         echo -ne "\nPressione Enter para retornar..."; read
                         ;;
                     11)
-                        # Chama a função operacional do Xray com as 7 opções corrigidas
+                        # Chama a função real e corrigida do Xray com as 7 opções rodando
                         funcao_menu_xray
                         ;;
                     12)
