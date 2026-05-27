@@ -33,7 +33,7 @@ check_status() {
     [ -f "$CONF_DIR/telegram_token" ] && status_chatbot="$ALIEN_ACTIVE" || status_chatbot="$ALIEN_INACTIVE"
 }
 
-# Função para checar status do Submenu 12
+# Função para checar status do Submenu Modos de Conexão
 check_sub_status() {
     pidof dropbear >/dev/null && s_dropbear="$ALIEN_ACTIVE" || s_dropbear="$ALIEN_INACTIVE"
     systemctl is-active --quiet openvpn 2>/dev/null && s_openvpn="$ALIEN_ACTIVE" || s_openvpn="$ALIEN_INACTIVE"
@@ -49,6 +49,7 @@ check_sub_status() {
     systemctl is-active --quiet hysteria2 2>/dev/null && s_hysteria="$ALIEN_ACTIVE" || s_hysteria="$ALIEN_INACTIVE"
 }
 
+# Cabeçalho Padrão Estilizado da VPS 2
 header() {
     clear
     check_status
@@ -57,25 +58,26 @@ header() {
     local cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
     local num_cores=$(nproc)
     local system_time=$(date +"%H:%M:%S")
-    local os_info=$(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -1)
+    local os_info=$(lsb_release -ds 2>/dev/null || cat /etc/*release 2>/dev/null | head -1 | cut -d'"' -f2)
     local total_users=$(cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)' | wc -l)
-    
-    echo -e "${GREEN}👽════════════════════════════════════════════════════════════════════════👽${NC}"
-    echo -e "${GREEN}║                     👽 ALIEN VPN SSH PRO 👽                              ║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════════╝${NC}"
-    echo -e "${BLUE} SISTEMA:${NC} $os_info | ${BLUE}HORA:${NC} $system_time"
-    echo -e "${BLUE} MEMORIA RAM:${NC} Total: $ram_total |\tEm Uso: $ram_used"
-    echo -e "${BLUE} PROCESSADOR:${NC} Núcleos: $num_cores |\tEm Uso: $cpu_usage"
-    echo -e "${BLUE} ONLINES:${NC} $(who | wc -l)      |\t${RED}EXPIRADOS:${NC} 0      | ${BLUE}TOTAL CONTAS:${NC} $total_users"
-    echo -e "${GREEN}════════════════════════════════════════════════════════════════════════════${NC}"
+    local onlines=$(who | wc -l)
+
+    echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
+    echo -e "${GREEN}║                     👽 ALIEN VPN SSH PRO 👽                            ║${NC}"
+    echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════╣${NC}"
+    printf "${GREEN}║${NC} %-34s ${GREEN}║${NC} HORA: %-25s ${GREEN}║${NC}\n" "SISTEMA: $os_info" "$system_time"
+    printf "${GREEN}║${NC} RAM TOTAL: %-23s ${GREEN}║${NC} EM USO: %-22s ${GREEN}║${NC}\n" "$ram_total" "$ram_used"
+    printf "${GREEN}║${NC} CORES CPU: %-23s ${GREEN}║${NC} CPU USO: %-21s ${GREEN}║${NC}\n" "$num_cores" "$cpu_usage"
+    printf "${GREEN}║${NC} ONLINES: %-10s EXPIRADOS: %-4s ${GREEN}║${NC} TOTAL CONTAS: %-14s ${GREEN}║${NC}\n" "$onlines" "0" "$total_users"
+    echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════╣${NC}"
 }
 
 header_conexao() {
     clear
     check_sub_status
-    echo -e "${GREEN}👽════════════════════════════════════════════════════════════════════════👽${NC}"
-    echo -e "${GREEN}║                     👽 MODOS DE CONEXAO 👽                               ║${NC}"
-    echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
+    echo -e "${GREEN}║                     👽 MODOS DE CONEXÃO 👽                             ║${NC}"
+    echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════╣${NC}"
 }
 
 press_enter() {
@@ -83,31 +85,40 @@ press_enter() {
     read -r
 }
 
+# Alinhamento Cirúrgico das Tabelas com Linha Vertical Central
+printf_linha_alinhada() {
+    local opt1="$1" txt1="$2" stat1="$3"
+    local opt2="$4" txt2="$5" stat2="$6"
+    
+    # Se o status estiver vazio, não bota o ícone do alien para não quebrar a tabela
+    [ -z "$stat1" ] && local s1="  " || local s1="$stat1"
+    [ -z "$stat2" ] && local s2="  " || local s2="$stat2"
+
+    printf "${GREEN}║${NC} ${GREEN}[%s]${NC} • %-20s %b ${GREEN}║${NC} ${GREEN}[%s]${NC} • %-14s %b ${GREEN}║${NC}\n" "$opt1" "$txt1" "$s1" "$opt2" "$txt2" "$s2"
+}
+
 ###############################################################################
-# SUBMENU DO XRAY (BETA) - PORTAS E ATIVAÇÃO 100% MANUAIS
+# SUBMENU DO XRAY (PORTAS E ATIVAÇÃO MANUAIS)
 ###############################################################################
 submenu_xray() {
     while true; do
         clear
-        echo -e "${RED}⎴ XRAY (Beta) ⎵${NC}"
-        echo ""
-        
+        echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
+        echo -e "${GREEN}║                     👽 GERENCIAR XRAY CORE 👽                          ║${NC}"
+        echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════╣${NC}"
         if [ -f "$CONF_DIR/xray_ativo" ]; then
-            echo -e "${BLUE}PORTA(S):${NC} ${GREEN}1085 443${NC}"
+            printf "${GREEN}║${NC} STATUS: %-25s ${GREEN}║${NC} PORTAS: %-24s ${GREEN}║${NC}\n" "${GREEN}ATIVADO${NC}" "1085, 443"
         else
-            echo -e "${BLUE}PORTA(S):${NC} ${RED}DESATIVADO${NC}"
+            printf "${GREEN}║${NC} STATUS: %-25s ${GREEN}║${NC} PORTAS: %-24s ${GREEN}║${NC}\n" "${RED}DESATIVADO${NC}" "----"
         fi
+        echo -e "${GREEN}╠══════════════════════════════════════════════════════════════════════╣${NC}"
+        printf "${GREEN}║${NC} ${RED}[01]${NC} • USUARIOS E UUID       ${GREEN}║${NC} ${RED}[05]${NC} • EXIBIR PRESET       ${GREEN}║${NC}\n"
+        printf "${GREEN}║${NC} ${RED}[02]${NC} • ALTERAR IP            ${GREEN}║${NC} ${RED}[06]${NC} • REINICIAR / ATIVAR  ${GREEN}║${NC}\n"
+        printf "${GREEN}║${NC} ${RED}[03]${NC} • ALTERAR SNI           ${GREEN}║${NC} ${RED}[07]${NC} • REMOVER XRAY        ${GREEN}║${NC}\n"
+        printf "${GREEN}║${NC} ${RED}[04]${NC} • ALTERAR HOST/CDN      ${GREEN}║${NC} ${RED}[00]${NC} • VOLTAR AO MENU      ${GREEN}║${NC}\n"
+        echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
         echo ""
-        echo -e " ${RED}[01]${NC} • USUARIOS E UUID"
-        echo -e " ${RED}[02]${NC} • ALTERAR IP"
-        echo -e " ${RED}[03]${NC} • ALTERAR SNI"
-        echo -e " ${RED}[04]${NC} • ALTERAR HOST/CDN"
-        echo -e " ${RED}[05]${NC} • EXIBIR PRESET"
-        echo -e " ${RED}[06]${NC} • REINICIAR XRAY / ATIVAR"
-        echo -e " ${RED}[07]${NC} • REMOVER XRAY"
-        echo -e " ${RED}[00]${NC} • RETORNAR AO MENU"
-        echo ""
-        read -p " INFORME UMA OPCAO: " xray_opt
+        read -p " 🔹 Informe uma opção: " xray_opt
          
         case $xray_opt in
             01|1)
@@ -127,7 +138,7 @@ submenu_xray() {
             03|3)
                 clear
                 read -p "Informe o Novo SNI (ex: facebook.com): " new_sni
-                [ -n "$new_sni" ] && echo -e "${GREEN}✓ SNI do Xray updated para: $new_sni${NC}"
+                [ -n "$new_sni" ] && echo -e "${GREEN}✓ SNI do Xray atualizado para: $new_sni${NC}"
                 press_enter ;;
             04|4)
                 clear
@@ -161,22 +172,19 @@ submenu_xray() {
 }
 
 ###############################################################################
-# [12] SUBMENU DOS MODOS DE CONEXÃO RIGIDAMENTE ALINHADO
+# [12] SUBMENU DOS MODOS DE CONEXÃO ALINHADO
 ###############################################################################
 sub_modos_conexao() {
     while true; do
         header_conexao
-        echo ""
-        printf " ${GREEN}[01]${NC} • %-15s %-10s ${GREEN}[08]${NC} • %-15s %s\n" "OPENSSH" "$ALIEN_ACTIVE" "PROXY SOCKS" "$s_socks"
-        printf " ${GREEN}[02]${NC} • %-15s %-10s ${GREEN}[09]${NC} • %-15s %s\n" "DROPBEAR" "$s_dropbear" "OPEN PROXY" "$s_oproxy"
-        printf " ${GREEN}[03]${NC} • %-15s %-10s ${GREEN}[10]${NC} • %-15s %s\n" "OPENVPN" "$s_openvpn" "SLOW DNS" "$s_slow"
-        printf " ${GREEN}[04]${NC} • %-15s %-10s ${GREEN}[11]${NC} • %-15s %s\n" "SQUID PROXY" "$s_squid" "V2RAY/XRAY" "$s_v2xray"
-        printf " ${GREEN}[05]${NC} • %-15s %-10s ${GREEN}[12]${NC} • %-15s %s\n" "SSL TUNNEL" "$s_stunnel" "UDP CUSTOM" "$s_udp"
-        printf " ${GREEN}[06]${NC} • %-15s %-10s ${GREEN}[13]${NC} • %-15s %s\n" "SSLH MULTIPLEX" "$s_sslh" "HYSTERIA" "$s_hysteria"
-        printf " ${GREEN}[07]${NC} • %-15s %s\n" "WEBSOCKET" "$s_websocket"
-        echo ""
-        echo -e " ${RED}[00]${NC} • RETORNAR     "
-        echo -e "${GREEN}════════════════════════════════════════════════════════════════════════════${NC}"
+        printf_linha_alinhada "01" "OPENSSH" "" "08" "PROXY SOCKS" "$s_socks"
+        printf_linha_alinhada "02" "DROPBEAR" "$s_dropbear" "09" "OPEN PROXY" "$s_oproxy"
+        printf_linha_alinhada "03" "OPENVPN" "$s_openvpn" "10" "SLOW DNS" "$s_slow"
+        printf_linha_alinhada "04" "SQUID PROXY" "$s_squid" "11" "V2RAY/XRAY" "$s_v2xray"
+        printf_linha_alinhada "05" "SSL TUNNEL" "$s_stunnel" "12" "UDP CUSTOM" "$s_udp"
+        printf_linha_alinhada "06" "SSLH MULTIPLEX" "$s_sslh" "13" "HYSTERIA" "$s_hysteria"
+        printf_linha_alinhada "07" "WEBSOCKET" "$s_websocket" "00" "VOLTAR" ""
+        echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
         echo ""
         read -p " 🔹 Escolha uma opção [00-13]: " sub_opt
         
@@ -266,19 +274,11 @@ sub_modos_conexao() {
     done
 }
 
-###############################################################################
-# REGRAS CIRÚRGICAS DE ALINHAMENTO DA TABELA PRINCIPAL (IGUAL VPS 2)
-###############################################################################
-printf_linha_alinhada() {
-    local opt1="$1" txt1="$2" stat1="$3"
-    local opt2="$4" txt2="$5" stat2="$6"
-    printf " ${GREEN}[%s]${NC} • %-22s %-10s ${GREEN}[%s]${NC} • %-15s %s\n" "$opt1" "$txt1" "$stat1" "$opt2" "$txt2" "$stat2"
-}
-
+# Funções Secundárias do Menu
 create_ssh_user() { header; echo -e "${BLUE}→ Criar Novo Usuário SSH${NC}\n"; read -p "Nome: " username; read -p "Senha: " password; useradd -M -s /usr/sbin/nologin "$username" >/dev/null 2>&1; echo "$username:$password" | chpasswd; echo -e "${GREEN}✓ Usuário Criado!${NC}"; press_enter; }
 create_test_user() { header; echo -e "${BLUE}→ Criar Teste Temporário${NC}\n"; local t_user="teste$((RANDOM%899+100))"; useradd -M -s /usr/sbin/nologin "$t_user" >/dev/null 2>&1; echo "$t_user:1234" | chpasswd; echo -e "${GREEN}✓ Teste Criado: $t_user${NC}"; press_enter; }
 remove_ssh_user() { header; read -p "Remover Usuário: " username; userdel -r "$username" 2>/dev/null; echo -e "${GREEN}✓ Removido.${NC}"; press_enter; }
-renew_ssh_user() { header; read -p "Remover Usuário: " username; read -p "Dias: " days; chage -E $(date -d "+$days days" +%Y-%m-%d) "$username" 2>/dev/null; echo -e "${GREEN}✓ Renovado.${NC}"; press_enter; }
+renew_ssh_user() { header; read -p "Renovar Usuário: " username; read -p "Dias: " days; chage -E $(date -d "+$days days" +%Y-%m-%d) "$username" 2>/dev/null; echo -e "${GREEN}✓ Renovado.${NC}"; press_enter; }
 show_online_users() { header; echo -e "${BLUE}→ Usuários Online${NC}\n"; who | awk '{print "👽 Usuário: "$1}'; press_enter; }
 alter_user_date() { header; read -p "Usuário: " username; read -p "Data (AAAA-MM-DD): " d; chage -E "$d" "$username" 2>/dev/null; press_enter; }
 alter_user_limit() { header; read -p "Usuário: " username; read -p "Limite: " l; echo "$username hard maxlogins $l" > /etc/security/limits.d/"$username".conf; press_enter; }
@@ -291,9 +291,8 @@ optimize_server() { header; echo -e "${GREEN}✓ VPS Otimizada com sucesso!${NC}
 traffic_monitor() { header; echo -e "Monitorando tráfego ativo..."; press_enter; }
 manage_firewall() { header; echo -e "Configurações de Firewall estáveis."; press_enter; }
 system_info_menu() { header; echo "Uptime: $(uptime -p)"; press_enter; }
-
 manage_banner() { header; [ -f /etc/issue.net ] && rm -f /etc/issue.net && echo -e "${RED}✓ Banner removido.${NC}" || (echo "Alien VPN" > /etc/issue.net && echo -e "${GREEN}✓ Banner ativo!${NC}"); press_enter; }
-toggle_ssh_limit() { header; [ -f /etc/security/limits.d/ssh-limit.conf ] && rm -f /etc/security/limits.d/ssh-limit.conf && echo -e "${RED}✓ Limiter Desativo.${NC}" || (echo "# Limiter" > /etc/security/limits.d/ssh-limit.conf && echo -e "${GREEN}✓ Limiter Ativo!${NC}"); press_enter; }
+toggle_ssh_limit() { header; [ -f /etc/security/limits.d/ssh-limit.conf ] && rm -f /etc/security/limits.d/ssh-limit.conf && echo -e "${RED}✓ Limiter Desativado.${NC}" || (echo "# Limiter" > /etc/security/limits.d/ssh-limit.conf && echo -e "${GREEN}✓ Limiter Ativo!${NC}"); press_enter; }
 manage_badvpn() { header; systemctl is-active --quiet badvpn && (systemctl stop badvpn; echo -e "${RED}✓ BadVPN parado.${NC}") || (touch "$CONF_DIR/badvpn" && echo -e "${GREEN}✓ BadVPN ativo na porta 7300!${NC}"); press_enter; }
 
 toggle_automenu() { 
@@ -314,13 +313,11 @@ manage_chatbots() { header; [ -f "$CONF_DIR/telegram_token" ] && rm -f "$CONF_DI
 more_options() { header; sync && echo 3 > /proc/sys/vm/drop_caches; echo -e "${GREEN}✓ Memória RAM limpa!${NC}"; press_enter; }
 
 ###############################################################################
-# INTERFACE PRINCIPAL RIGIDAMENTE ALINHADA (ESTILO GÊMEO VPS 2)
+# INTERFACE PRINCIPAL TOTALMENTE ALINHADA (GÊMEA IDÊNTICA DA VPS 2)
 ###############################################################################
 show_menu() {
     while true; do
         header
-        echo -e "${CYAN}📋 INFORME UMA OPÇÃO:${NC}"
-        echo ""
         printf_linha_alinhada "01" "CRIAR USUARIO" "" "13" "SPEEDTEST" ""
         printf_linha_alinhada "02" "CRIAR TESTE" "" "14" "OTIMIZAR" ""
         printf_linha_alinhada "03" "REMOVER USUARIO" "" "15" "TRAFEGO" ""
@@ -331,12 +328,11 @@ show_menu() {
         printf_linha_alinhada "08" "ALTERAR SENHA" "" "20" "BADVPN" "$status_badvpn"
         printf_linha_alinhada "09" "REMOVER EXPIRADOS" "" "21" "AUTO MENU" "$status_automenu"
         printf_linha_alinhada "10" "RELATORIO USUARIOS" "" "22" "CHATBOTS" "$status_chatbot"
-        printf_linha_alinhada "11" "BACKUP DE USUARIOS" "" "23" "MAIS OPCOES" "→"
+        printf_linha_alinhada "11" "BACKUP DE USUARIOS" "" "23" "MAIS OPCOES" ""
         printf_linha_alinhada "12" "MODOS DE CONEXAO" "" "00" "SAIR DO MENU" ""
+        echo -e "${GREEN}👽══════════════════════════════════════════════════════════════════════👽${NC}"
         echo ""
-        echo -e "${GREEN}════════════════════════════════════════════════════════════════════════════${NC}"
-        echo ""
-        read -p " 🔹 Escolha: " option
+        read -p " 🔹 Escolha uma opção: " option
         
         case $option in
             01|1) create_ssh_user ;;
