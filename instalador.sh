@@ -17,7 +17,7 @@ NC='\033[0m'
 
 # Variáveis de ícones conforme especificação do usuário
 ALIEN_ACTIVE="${GREEN}👽${NC}"
-ALIEN_INACTIVE="${RED}👽${NC}"
+ALIEN_INACTIVE="${WHITE}👽${NC}"
 
 # Diretório base neutro
 CONF_DIR="/etc/alien_vpn"
@@ -29,7 +29,7 @@ check_status() {
     grep -q "^Banner /etc/issue.net" /etc/ssh/sshd_config 2>/dev/null && [ -s /etc/issue.net ] && status_banner="$ALIEN_ACTIVE" || status_banner="$ALIEN_INACTIVE"
     [ -f /etc/security/limits.d/ssh-limit.conf ] && status_limitar="$ALIEN_ACTIVE" || status_limitar="$ALIEN_INACTIVE"
     (systemctl is-active --quiet badvpn 2>/dev/null || pgrep -x "badvpn-udpgw" >/dev/null) && status_badvpn="$ALIEN_ACTIVE" || status_badvpn="$ALIEN_INACTIVE"
-    grep -q "install.sh" /root/.bashrc 2>/dev/null && status_automenu="$ALIEN_ACTIVE" || status_automenu="$ALIEN_INACTIVE"
+    grep -q "instalador.sh" /root/.bashrc 2>/dev/null && status_automenu="$ALIEN_ACTIVE" || status_automenu="$ALIEN_INACTIVE"
     [ -f "$CONF_DIR/telegram_token" ] && status_chatbot="$ALIEN_ACTIVE" || status_chatbot="$ALIEN_INACTIVE"
 }
 
@@ -64,9 +64,9 @@ header() {
     echo -e "${GREEN}║                     👽 ALIEN VPN SSH PRO 👽                              ║${NC}"
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════════╝${NC}"
     echo -e "${BLUE} SISTEMA:${NC} $os_info | ${BLUE}HORA:${NC} $system_time"
-    echo -e "${BLUE} MEMORIA RAM:${NC} Total: $ram_total | Em Uso: $ram_used"
-    echo -e "${BLUE} PROCESSADOR:${NC} Núcleos: $num_cores | Em Uso: $cpu_usage"
-    echo -e "${BLUE} ONLINES:${NC} $(who | wc -l)      | ${RED}EXPIRADOS:${NC} 0      | ${BLUE}TOTAL CONTAS:${NC} $total_users"
+    echo -e "${BLUE} MEMORIA RAM:${NC} Total: $ram_total |\tEm Uso: $ram_used"
+    echo -e "${BLUE} PROCESSADOR:${NC} Núcleos: $num_cores |\tEm Uso: $cpu_usage"
+    echo -e "${BLUE} ONLINES:${NC} $(who | wc -l)      |\t${RED}EXPIRADOS:${NC} 0      | ${BLUE}TOTAL CONTAS:${NC} $total_users"
     echo -e "${GREEN}════════════════════════════════════════════════════════════════════════════${NC}"
 }
 
@@ -92,7 +92,6 @@ submenu_xray() {
         echo -e "${RED}⎴ XRAY (Beta) ⎵${NC}"
         echo ""
         
-        # Só exibe as portas se o arquivo de ativação manual existir
         if [ -f "$CONF_DIR/xray_ativo" ]; then
             echo -e "${BLUE}PORTA(S):${NC} ${GREEN}1085 443${NC}"
         else
@@ -109,7 +108,7 @@ submenu_xray() {
         echo -e " ${RED}[00]${NC} • RETORNAR AO MENU"
         echo ""
         read -p " INFORME UMA OPCAO: " xray_opt
-        
+         
         case $xray_opt in
             01|1)
                 clear
@@ -162,19 +161,19 @@ submenu_xray() {
 }
 
 ###############################################################################
-# [12] SUBMENU DOS MODOS DE CONEXÃO
+# [12] SUBMENU DOS MODOS DE CONEXÃO RIGIDAMENTE ALINHADO
 ###############################################################################
 sub_modos_conexao() {
     while true; do
         header_conexao
         echo ""
-        echo -e " ${GREEN}[01]${NC} • OPENSSH        $ALIEN_ACTIVE           ${GREEN}[08]${NC} • PROXY SOCKS    $s_socks"
-        echo -e " ${GREEN}[02]${NC} • DROPBEAR       $s_dropbear           ${GREEN}[09]${NC} • OPEN PROXY     $s_oproxy"
-        echo -e " ${GREEN}[03]${NC} • OPENVPN        $s_openvpn           ${GREEN}[10]${NC} • SLOW DNS       $s_slow"
-        echo -e " ${GREEN}[04]${NC} • SQUID PROXY    $s_squid           ${GREEN}[11]${NC} • V2RAY/XRAY     $s_v2xray"
-        echo -e " ${GREEN}[05]${NC} • SSL TUNNEL     $s_stunnel           ${GREEN}[12]${NC} • UDP CUSTOM     $s_udp"
-        echo -e " ${GREEN}[06]${NC} • SSLH MULTIPLEX $s_sslh           ${GREEN}[13]${NC} • HYSTERIA       $s_hysteria"
-        echo -e " ${GREEN}[07]${NC} • WEBSOCKET      $s_websocket"
+        printf " ${GREEN}[01]${NC} • %-15s %-10s ${GREEN}[08]${NC} • %-15s %s\n" "OPENSSH" "$ALIEN_ACTIVE" "PROXY SOCKS" "$s_socks"
+        printf " ${GREEN}[02]${NC} • %-15s %-10s ${GREEN}[09]${NC} • %-15s %s\n" "DROPBEAR" "$s_dropbear" "OPEN PROXY" "$s_oproxy"
+        printf " ${GREEN}[03]${NC} • %-15s %-10s ${GREEN}[10]${NC} • %-15s %s\n" "OPENVPN" "$s_openvpn" "SLOW DNS" "$s_slow"
+        printf " ${GREEN}[04]${NC} • %-15s %-10s ${GREEN}[11]${NC} • %-15s %s\n" "SQUID PROXY" "$s_squid" "V2RAY/XRAY" "$s_v2xray"
+        printf " ${GREEN}[05]${NC} • %-15s %-10s ${GREEN}[12]${NC} • %-15s %s\n" "SSL TUNNEL" "$s_stunnel" "UDP CUSTOM" "$s_udp"
+        printf " ${GREEN}[06]${NC} • %-15s %-10s ${GREEN}[13]${NC} • %-15s %s\n" "SSLH MULTIPLEX" "$s_sslh" "HYSTERIA" "$s_hysteria"
+        printf " ${GREEN}[07]${NC} • %-15s %s\n" "WEBSOCKET" "$s_websocket"
         echo ""
         echo -e " ${RED}[00]${NC} • RETORNAR     "
         echo -e "${GREEN}════════════════════════════════════════════════════════════════════════════${NC}"
@@ -259,11 +258,7 @@ sub_modos_conexao() {
                 press_enter ;;
             13)
                 header_conexao
-                if systemctl is-active --quiet hysteria2 2>/dev/null; then
-                    systemctl stop hysteria2 && echo -e "${RED}Hysteria Protocol desativado.${NC}"
-                else
-                    echo -e "${GREEN}✓ Protocolo Hysteria ativo e acelerado via UDP!${NC}"
-                fi
+                echo -e "${BLUE}→ Gerenciamento Hysteria Protocol${NC}"
                 press_enter ;;
             00|0) return ;;
             *) echo -e "${RED}Opção inválida!${NC}"; sleep 1 ;;
@@ -283,7 +278,7 @@ printf_linha_alinhada() {
 create_ssh_user() { header; echo -e "${BLUE}→ Criar Novo Usuário SSH${NC}\n"; read -p "Nome: " username; read -p "Senha: " password; useradd -M -s /usr/sbin/nologin "$username" >/dev/null 2>&1; echo "$username:$password" | chpasswd; echo -e "${GREEN}✓ Usuário Criado!${NC}"; press_enter; }
 create_test_user() { header; echo -e "${BLUE}→ Criar Teste Temporário${NC}\n"; local t_user="teste$((RANDOM%899+100))"; useradd -M -s /usr/sbin/nologin "$t_user" >/dev/null 2>&1; echo "$t_user:1234" | chpasswd; echo -e "${GREEN}✓ Teste Criado: $t_user${NC}"; press_enter; }
 remove_ssh_user() { header; read -p "Remover Usuário: " username; userdel -r "$username" 2>/dev/null; echo -e "${GREEN}✓ Removido.${NC}"; press_enter; }
-renew_ssh_user() { header; read -p "Renovar Usuário: " username; read -p "Dias: " days; chage -E $(date -d "+$days days" +%Y-%m-%d) "$username" 2>/dev/null; echo -e "${GREEN}✓ Renovado.${NC}"; press_enter; }
+renew_ssh_user() { header; read -p "Remover Usuário: " username; read -p "Dias: " days; chage -E $(date -d "+$days days" +%Y-%m-%d) "$username" 2>/dev/null; echo -e "${GREEN}✓ Renovado.${NC}"; press_enter; }
 show_online_users() { header; echo -e "${BLUE}→ Usuários Online${NC}\n"; who | awk '{print "👽 Usuário: "$1}'; press_enter; }
 alter_user_date() { header; read -p "Usuário: " username; read -p "Data (AAAA-MM-DD): " d; chage -E "$d" "$username" 2>/dev/null; press_enter; }
 alter_user_limit() { header; read -p "Usuário: " username; read -p "Limite: " l; echo "$username hard maxlogins $l" > /etc/security/limits.d/"$username".conf; press_enter; }
@@ -300,7 +295,21 @@ system_info_menu() { header; echo "Uptime: $(uptime -p)"; press_enter; }
 manage_banner() { header; [ -f /etc/issue.net ] && rm -f /etc/issue.net && echo -e "${RED}✓ Banner removido.${NC}" || (echo "Alien VPN" > /etc/issue.net && echo -e "${GREEN}✓ Banner ativo!${NC}"); press_enter; }
 toggle_ssh_limit() { header; [ -f /etc/security/limits.d/ssh-limit.conf ] && rm -f /etc/security/limits.d/ssh-limit.conf && echo -e "${RED}✓ Limiter Desativo.${NC}" || (echo "# Limiter" > /etc/security/limits.d/ssh-limit.conf && echo -e "${GREEN}✓ Limiter Ativo!${NC}"); press_enter; }
 manage_badvpn() { header; systemctl is-active --quiet badvpn && (systemctl stop badvpn; echo -e "${RED}✓ BadVPN parado.${NC}") || (touch "$CONF_DIR/badvpn" && echo -e "${GREEN}✓ BadVPN ativo na porta 7300!${NC}"); press_enter; }
-toggle_automenu() { header; grep -q "install.sh" /root/.bashrc && (sed -i '/install.sh/d' /root/.bashrc; echo -e "${RED}✓ AutoMenu desativado.${NC}") || (echo "./install.sh" >> /root/.bashrc && echo -e "${GREEN}✓ AutoMenu ativo!${NC}"); press_enter; }
+
+toggle_automenu() { 
+    header
+    if grep -q "instalador.sh" /root/.bashrc; then
+        sed -i '/instalador.sh/d' /root/.bashrc
+        sed -i '/alias menu=/d' /root/.bashrc
+        echo -e "${RED}✓ AutoMenu e atalho desativados.${NC}"
+    else
+        echo "alias menu='echo -e \"\\\\033[1;32mCarregando Menu...\\\\033[0m\" && /root/instalador.sh'" >> /root/.bashrc
+        echo "/root/instalador.sh" >> /root/.bashrc
+        echo -e "${GREEN}✓ AutoMenu e atalho [ menu ] configurados com sucesso!${NC}"
+    fi
+    press_enter
+}
+
 manage_chatbots() { header; [ -f "$CONF_DIR/telegram_token" ] && rm -f "$CONF_DIR/telegram_token" && echo -e "${RED}✓ Bot removido.${NC}" || (echo "token" > "$CONF_DIR/telegram_token" && echo -e "${GREEN}✓ Bot configurado!${NC}"); press_enter; }
 more_options() { header; sync && echo 3 > /proc/sys/vm/drop_caches; echo -e "${GREEN}✓ Memória RAM limpa!${NC}"; press_enter; }
 
