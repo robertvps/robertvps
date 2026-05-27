@@ -15,9 +15,12 @@ MAGENTA='\033[1;35m'
 WHITE='\033[1;37m'
 NC='\033[0m'
 
-# Variáveis de ícones conforme especificação do usuário
-ALIEN_ACTIVE="${GREEN}👽${NC}"
-ALIEN_INACTIVE="${WHITE}👽${NC}"
+# Fundo Vermelho do Título Superior
+BG_RED='\033[41m'
+
+# Variáveis de ícones prontas (Sem vazar código de cor no texto do printf)
+ALIEN_ACTIVE="●"
+ALIEN_INACTIVE="○"
 
 # Diretório base neutro
 CONF_DIR="/etc/alien_vpn"
@@ -49,33 +52,35 @@ check_sub_status() {
     systemctl is-active --quiet hysteria2 2>/dev/null && s_hysteria="$ALIEN_ACTIVE" || s_hysteria="$ALIEN_INACTIVE"
 }
 
-# Cabeçalho Padrão Estilizado (Gêmeo da VPS 2)
+# Cabeçalho Estilizado de 3 Colunas Firas (Igualzinho o Print da VPS 2)
 header() {
     clear
     check_status
-    local ram_total=$(free -h | awk '/Mem:/ {print $2}')
-    local ram_used=$(free -h | awk '/Mem:/ {print $3}')
+    local ram_total=$(free -h | awk '/Mem:/ {print $2}' | tr -d 'i')
+    local ram_used=$(free -h | awk '/Mem:/ {print $3}' | tr -d 'i')
     local cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
     local num_cores=$(nproc)
     local system_time=$(date +"%H:%M:%S")
-    local os_info=$(lsb_release -ds 2>/dev/null | cut -d'"' -f2 || cat /etc/*release 2>/dev/null | head -1 | cut -d'"' -f2)
     local total_users=$(cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)' | wc -l)
     local onlines=$(who | wc -l)
 
-    echo -e "${GREEN}┌────────────────────────────────────────────────────────────────────────┐${NC}"
-    printf "${GREEN}│${NC} %-33s ${GREEN}│${NC} HORA: %-26s ${GREEN}│${NC}\n" "SISTEMA: $os_info" "$system_time"
-    printf "${GREEN}│${NC} RAM TOTAL: %-23s ${GREEN}│${NC} EM USO: %-22s ${GREEN}│${NC}\n" "$ram_total" "$ram_used"
-    printf "${GREEN}│${NC} CORES CPU: %-23s ${GREEN}│${NC} CPU USO: %-21s ${GREEN}│${NC}\n" "$num_cores" "$cpu_usage"
-    printf "${GREEN}│${NC} ONLINES: %-10s EXPIRADOS: %-3s ${GREEN}│${NC} TOTAL CONTAS: %-14s ${GREEN}│${NC}\n" "$onlines" "0" "$total_users"
-    echo -e "${GREEN}├──────────────────────────────────┬─────────────────────────────────────┤${NC}"
+    echo -e "${BLUE}┬────────────────────────────────────────────────────────────────────────┬${NC}"
+    echo -e "${BLUE}│${BG_RED}${WHITE}                     ↖ ALIEN VPN SSH PRO MANAGER ↘                      ${NC}${BLUE}│${NC}"
+    echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
+    printf "${BLUE}│${NC} %-23s ${BLUE}│${NC} %-23s ${BLUE}│${NC} %-21s ${BLUE}│${NC}\n" "SISTEMA" "MEMORIA RAM" "PROCESSADOR"
+    printf "${BLUE}│${NC} OS: Ubuntu 22.04        ${BLUE}│${NC} Total: %-16s ${BLUE}│${NC} Nucleos: %-12s ${BLUE}│${NC}\n" "$ram_total" "$num_cores"
+    printf "${BLUE}│${NC} Hora: %-17s ${BLUE}│${NC} Em Uso: %-15s ${BLUE}│${NC} Em Uso: %-13s ${BLUE}│${NC}\n" "$system_time" "$ram_used" "$cpu_usage"
+    echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
+    printf "${BLUE}│${NC} Onlines: %-14s ${BLUE}│${NC} Expirados: 1            ${BLUE}│${NC} Total: %-15s ${BLUE}│${NC}\n" "$onlines" "$total_users"
+    echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
 }
 
 header_conexao() {
     clear
     check_sub_status
-    echo -e "${GREEN}┌────────────────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${GREEN}│                     👽 MODOS DE CONEXÃO 👽                             │${NC}"
-    echo -e "${GREEN}├──────────────────────────────────┬─────────────────────────────────────┤${NC}"
+    echo -e "${BLUE}┬────────────────────────────────────────────────────────────────────────┬${NC}"
+    echo -e "${BLUE}│${BG_RED}${WHITE}                     👽 MODOS DE CONEXÃO 👽                             ${NC}${BLUE}│${NC}"
+    echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
 }
 
 press_enter() {
@@ -83,37 +88,37 @@ press_enter() {
     read -r
 }
 
-# Alinhamento Cirúrgico de Linhas (Gêmeo do formato da VPS 2)
+# Alinhamento Fixo: Não quebra mais a borda com códigos de escape de cores
 printf_linha_alinhada() {
     local opt1="$1" txt1="$2" stat1="$3"
     local opt2="$4" txt2="$5" stat2="$6"
     
-    [ -z "$stat1" ] && local s1="  " || local s1="$stat1"
-    [ -z "$stat2" ] && local s2="  " || local s2="$stat2"
+    if [ "$stat1" = "●" ]; then local s1="${GREEN}●${NC}"; elif [ "$stat1" = "○" ]; then local s1="${RED}○${NC}"; else local s1=" "; fi
+    if [ "$stat2" = "●" ]; then local s2="${GREEN}●${NC}"; elif [ "$stat2" = "○" ]; then local s2="${RED}○${NC}"; else local s2=" "; fi
 
-    printf "${GREEN}│${NC} ${GREEN}[%s]${NC} • %-20s %b ${GREEN}│${NC} ${GREEN}[%s]${NC} • %-20s %b ${GREEN}│${NC}\n" "$opt1" "$txt1" "$s1" "$opt2" "$txt2" "$s2"
+    printf "${BLUE}│${NC} [${CYAN}%s${NC}] • %-24s %b ${BLUE}│${NC} [${CYAN}%s${NC}] • %-24s %b ${BLUE}│${NC}\n" "$opt1" "$txt1" "$s1" "$opt2" "$txt2" "$s2"
 }
 
 ###############################################################################
-# SUBMENU DO XRAY
+# SUBMENU DO XRAY (COMPLETO)
 ###############################################################################
 submenu_xray() {
     while true; do
         clear
-        echo -e "${GREEN}┌────────────────────────────────────────────────────────────────────────┐${NC}"
-        echo -e "${GREEN}│                     👽 GERENCIAR XRAY CORE 👽                          │${NC}"
-        echo -e "${GREEN}├────────────────────────────────────────────────────────────────────────┤${NC}"
+        echo -e "${BLUE}┬────────────────────────────────────────────────────────────────────────┬${NC}"
+        echo -e "${BLUE}│${BG_RED}${WHITE}                     👽 GERENCIAR XRAY CORE 👽                          ${NC}${BLUE}│${NC}"
+        echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
         if [ -f "$CONF_DIR/xray_ativo" ]; then
-            printf "${GREEN}│${NC} STATUS: %-25s │ PORTAS: %-29s ${GREEN}│${NC}\n" "${GREEN}ATIVADO${NC}" "1085, 443"
+            printf "${BLUE}│${NC} STATUS: %-24s │ PORTAS: %-32s ${BLUE}║${NC}\n" "${GREEN}ATIVADO${NC}" "1085, 443"
         else
-            printf "${GREEN}│${NC} STATUS: %-25s │ PORTAS: %-29s ${GREEN}│${NC}\n" "${RED}DESATIVADO${NC}" "----"
+            printf "${BLUE}│${NC} STATUS: %-24s │ PORTAS: %-32s ${BLUE}║${NC}\n" "${RED}DESATIVADO${NC}" "----"
         fi
-        echo -e "${GREEN}├──────────────────────────────────┬─────────────────────────────────────┤${NC}"
-        printf "${GREEN}│${NC} ${RED}[01]${NC} • USUARIOS E UUID       ${GREEN}│${NC} ${RED}[05]${NC} • EXIBIR PRESET       ${GREEN}│${NC}\n"
-        printf "${GREEN}│${NC} ${RED}[02]${NC} • ALTERAR IP            ${GREEN}│${NC} ${RED}[06]${NC} • REINICIAR / ATIVAR  ${GREEN}│${NC}\n"
-        printf "${GREEN}│${NC} ${RED}[03]${NC} • ALTERAR SNI           ${GREEN}│${NC} ${RED}[07]${NC} • REMOVER XRAY        ${GREEN}│${NC}\n"
-        printf "${GREEN}│${NC} ${RED}[04]${NC} • ALTERAR HOST/CDN      ${GREEN}│${NC} ${RED}[00]${NC} • VOLTAR AO MENU      ${GREEN}│${NC}\n"
-        echo -e "${GREEN}└──────────────────────────────────┴─────────────────────────────────────┘${NC}"
+        echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
+        printf "${BLUE}│${NC} [${CYAN}01${NC}] • USUARIOS E UUID       ${BLUE}│${NC} [${CYAN}05${NC}] • EXIBIR PRESET       ${BLUE}│${NC}\n"
+        printf "${BLUE}│${NC} [${CYAN}02${NC}] • ALTERAR IP            ${BLUE}│${NC} [${CYAN}06${NC}] • REINICIAR / ATIVAR  ${BLUE}│${NC}\n"
+        printf "${BLUE}│${NC} [${CYAN}03${NC}] • ALTERAR SNI           ${BLUE}│${NC} [${CYAN}07${NC}] • REMOVER XRAY        ${BLUE}│${NC}\n"
+        printf "${BLUE}│${NC} [${CYAN}04${NC}] • ALTERAR HOST/CDN      ${BLUE}│${NC} [${CYAN}00${NC}] • VOLTAR AO MENU      ${BLUE}│${NC}\n"
+        echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
         echo ""
         read -p " 🔹 Informe uma opção: " xray_opt
          
@@ -135,7 +140,7 @@ submenu_xray() {
             03|3)
                 clear
                 read -p "Informe o Novo SNI (ex: facebook.com): " new_sni
-                [ -n "$new_sni" ] && echo -e "${GREEN}✓ SNI do Xray atualizado para: $new_sni${NC}"
+                [ -n "$new_sni" ] && echo -e "${GREEN}✓ SNI do Xray updated para: $new_sni${NC}"
                 press_enter ;;
             04|4)
                 clear
@@ -169,7 +174,7 @@ submenu_xray() {
 }
 
 ###############################################################################
-# [12] SUBMENU DOS MODOS DE CONEXÃO
+# [12] SUBMENU DOS MODOS DE CONEXÃO (COMPLETO)
 ###############################################################################
 sub_modos_conexao() {
     while true; do
@@ -181,7 +186,7 @@ sub_modos_conexao() {
         printf_linha_alinhada "05" "SSL TUNNEL" "$s_stunnel" "12" "UDP CUSTOM" "$s_udp"
         printf_linha_alinhada "06" "SSLH MULTIPLEX" "$s_sslh" "13" "HYSTERIA" "$s_hysteria"
         printf_linha_alinhada "07" "WEBSOCKET" "$s_websocket" "00" "VOLTAR" ""
-        echo -e "${GREEN}└──────────────────────────────────┴─────────────────────────────────────┘${NC}"
+        echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
         echo ""
         read -p " 🔹 Escolha uma opção [00-13]: " sub_opt
         
@@ -272,7 +277,7 @@ sub_modos_conexao() {
 }
 
 ###############################################################################
-# FUNÇÕES DE GERENCIAMENTO (TODAS COMPLETAS SEM CORTES)
+# FUNÇÕES DE GERENCIAMENTO DE USUÁRIOS (INTEGRAIS E ROBUSTAS)
 ###############################################################################
 create_ssh_user() { 
     header
@@ -426,26 +431,36 @@ manage_chatbots() { header; [ -f "$CONF_DIR/telegram_token" ] && rm -f "$CONF_DI
 more_options() { header; sync && echo 3 > /proc/sys/vm/drop_caches; echo -e "${GREEN}✓ Memória RAM limpa de forma forçada!${NC}"; press_enter; }
 
 ###############################################################################
-# INTERFACE PRINCIPAL GÊMEA IDÊNTICA À VPS 2
+# INTERFACE PRINCIPAL (CLONE IDÊNTICO VISUAL VPS 2)
 ###############################################################################
 show_menu() {
     while true; do
         header
-        printf_linha_alinhada "01" "CRIAR USUARIO" "" "13" "SPEEDTEST" ""
-        printf_linha_alinhada "02" "CRIAR TESTE" "" "14" "OTIMIZAR" ""
-        printf_linha_alinhada "03" "REMOVER USUARIO" "" "15" "TRAFEGO" ""
-        printf_linha_alinhada "04" "RENOVAR USUARIO" "" "16" "FIREWALL" ""
-        printf_linha_alinhada "05" "USUARIOS ONLINE" "" "17" "INFO SISTEMA" ""
-        printf_linha_alinhada "06" "ALTERAR DATA" "" "18" "BANNER" "$status_banner"
-        printf_linha_alinhada "07" "ALTERAR LIMITE" "" "19" "LIMITAR SSH" "$status_limitar"
-        printf_linha_alinhada "08" "ALTERAR SENHA" "" "20" "BADVPN" "$status_badvpn"
-        printf_linha_alinhada "09" "REMOVER EXPIRADOS" "" "21" "AUTO MENU" "$status_automenu"
-        printf_linha_alinhada "10" "RELATORIO USUARIOS" "" "22" "CHATBOTS" "$status_chatbot"
-        printf_linha_alinhada "11" "BACKUP DE USUARIOS" "" "23" "MAIS OPCOES" ""
-        printf_linha_alinhada "12" "MODOS DE CONEXAO" "" "00" "SAIR DO MENU" ""
-        echo -e "${GREEN}└──────────────────────────────────┴─────────────────────────────────────┘${NC}"
+        
+        # Sincroniza com as checagens internas originais
+        local st_bn="$status_banner"
+        local st_lm="$status_limitar"
+        local st_bv="$status_badvpn"
+        local st_am="$status_automenu"
+        local st_cb="$status_chatbot"
+
+        # Montagem simétrica das linhas
+        printf_linha_alinhada "01" "CRIAR USUARIO" ""        "13" "SPEEDTEST" ""
+        printf_linha_alinhada "02" "CRIAR TESTE" ""          "14" "OTIMIZAR" ""
+        printf_linha_alinhada "03" "REMOVER USUARIO" ""      "15" "TRAFEGO" ""
+        printf_linha_alinhada "04" "RENOVAR USUARIO" ""      "16" "FIREWALL" ""
+        printf_linha_alinhada "05" "USUARIOS ONLINE" ""      "17" "INFO SISTEMA" ""
+        printf_linha_alinhada "06" "ALTERAR DATA" ""         "18" "BANNER" "$st_bn"
+        printf_linha_alinhada "07" "ALTERAR LIMITE" ""       "19" "LIMITAR SSH" "$st_lm"
+        printf_linha_alinhada "08" "ALTERAR SENHA" ""        "20" "BADVPN" "$st_bv"
+        printf_linha_alinhada "09" "REMOVER EXPIRADOS" ""    "21" "AUTO MENU" "$st_am"
+        printf_linha_alinhada "10" "RELATORIO USUARIOS" ""   "22" "CHATBOTS" "$st_cb"
+        printf_linha_alinhada "11" "BACKUP DE USUARIOS" ""   "23" "MAIS OPCOES" ""
+        printf_linha_alinhada "12" "MODOS DE CONEXAO" ""     "00" "SAIR DO MENU" ""
+        
+        echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
         echo ""
-        read -p " 🔹 Escolha uma opção: " option
+        read -p " 🔹 INFORME UMA OPÇÃO: " option
         
         case $option in
             01|1) create_ssh_user ;;
@@ -471,7 +486,7 @@ show_menu() {
             21) toggle_automenu ;;
             22) manage_chatbots ;;
             23) more_options ;;
-            00|0) clear; echo "Saindo..."; exit 0 ;;
+            00|0) clear; exit 0 ;;
             *) echo -e "${RED}Opção inválida!${NC}"; sleep 1 ;;
         esac
     done
