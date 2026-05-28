@@ -1,67 +1,60 @@
 #!/bin/bash
 
-# ==============================================================================
-# ALIEN VPN SSH PRO - SCRIPT DE INSTALAÇÃO AUTOMÁTICA
-# Versão Consolidada - 2026
-# ==============================================================================
+# CORES
+RED='\033[1;31m'; GREEN='\033[1;32m'; YELLOW='\033[1;33m'; BLUE='\033[1;34m'; CYAN='\033[1;36m'; WHITE='\033[1;37m'; BG_RED='\033[41m'; NC='\033[0m'
 
-# Definição de Cores
-RED='\033[1;31m'; GREEN='\033[1;32m'; YELLOW='\033[1;33m'; BLUE='\033[1;34m'; CYAN='\033[1;36m'; MAGENTA='\033[1;35m'; WHITE='\033[1;37m'; BG_RED='\033[41m'; NC='\033[0m'
-
-# --- [VISUAL VPS 2 - HEADER] ---
 header() {
     clear
-    local ram_total=$(free -h | awk '/Mem:/ {print $2}' | tr -d 'i')
-    local cpu_usage=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
-    local onlines=$(who | wc -l)
-    
+    local ram=$(free -h | awk '/Mem:/ {print $2}' | tr -d 'i')
+    local cpu=$(top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%* id.*/\1/" | awk '{print 100 - $1"%"}')
     echo -e "${BLUE}┬────────────────────────────────────────────────────────────────────────┬${NC}"
     echo -e "${BLUE}│${BG_RED}${WHITE}                 ↖ ALIEN VPN SSH PRO MANAGER ↘                  ${NC}${BLUE}│${NC}"
     echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
-    printf "${BLUE}│${NC} %-23s ${BLUE}│${NC} %-23s ${BLUE}│${NC} %-21s ${BLUE}│${NC}\n" "SISTEMA" "MEMORIA RAM" "PROCESSADOR"
-    printf "${BLUE}│${NC} OS: Ubuntu 22.04        ${BLUE}│${NC} Total: %-16s ${BLUE}│${NC} Uso: %-15s ${BLUE}│${NC}\n" "$ram_total" "$cpu_usage"
-    echo -e "${BLUE}├────────────────────────────────────────────────────────────────────────┤${NC}"
-    printf "${BLUE}│${NC} USUARIOS ONLINE: %-10s ${BLUE}│${NC} STATUS: ${GREEN}ONLINE${NC}               ${BLUE}│${NC}\n" "$onlines"
+    printf "${BLUE}│${NC} %-23s ${BLUE}│${NC} %-23s ${BLUE}│${NC} %-21s ${BLUE}│${NC}\n" "SISTEMA" "RAM" "CPU"
+    printf "${BLUE}│${NC} OS: Ubuntu 22.04        ${BLUE}│${NC} %-23s ${BLUE}│${NC} %-21s ${BLUE}│${NC}\n" "$ram" "$cpu"
     echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
 }
 
-# --- [AQUI ENTRA TODO O TEU CÓDIGO ANTIGO] ---
-# (Todas as tuas 22 funções originais estão aqui dentro)
-# ... [INSERIR AQUI O BLOCO DE FUNÇÕES DO TEU ARQUIVO ORIGINAL] ...
-
-# --- [MENU PRINCIPAL ESTILIZADO] ---
-show_menu() {
+# FUNÇÕES INTEGRADAS
+criar_usuario() { header; read -p "Usuario: " u; read -p "Senha: " p; useradd -M -s /usr/sbin/nologin "$u" && echo "$u:$p" | chpasswd; echo -e "${GREEN}Criado!${NC}"; read; }
+remover_usuario() { header; read -p "Usuario: " u; userdel -r "$u"; echo -e "${RED}Removido!${NC}"; read; }
+listar_usuarios() { header; cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)'; read; }
+monitorar_online() { header; who; read; }
+gerir_badvpn() { header; echo "1) Iniciar BadVPN (7300) 0) Voltar"; read -p "Opção: " o; [[ $o == 1 ]] && nohup badvpn-udpgw --listen-addr 127.0.0.1:7300 > /dev/null 2>&1 &; read; }
+gerir_squid() { header; apt install squid -y; echo "http_port 3128" > /etc/squid/squid.conf; systemctl restart squid; echo "Squid Ativo na 3128"; read; }
+gerir_bbr() { header; echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf; echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf; sysctl -p; echo "BBR Ativo!"; read; }
+gerir_firewall() { header; ufw allow 22/tcp; ufw allow 80/tcp; ufw allow 443/tcp; echo "Regras aplicadas!"; read; }
+submenu_xray() {
     while true; do
         header
-        echo -e " ${CYAN}📋 MENU PRINCIPAL - 23 OPÇÕES${NC}"
-        echo -e " ──────────────────────────────────────────────────────────────"
-        echo -e " ${GREEN}[01]${NC} Criar Conta SSH          ${GREEN}[02]${NC} Remover Conta SSH"
-        echo -e " ${GREEN}[03]${NC} Listar Contas            ${GREEN}[04]${NC} Usuários Online"
-        echo -e " ${GREEN}[05]${NC} Limitar Conexões         ${GREEN}[06]${NC} Definir Expiração"
-        echo -e " ${GREEN}[07]${NC} BadVPN Manager           ${GREEN}[08]${NC} Squid Proxy"
-        echo -e " ${GREEN}[09]${NC} OpenVPN Manager          ${MAGENTA}[10]${NC} Xray Core Manager ⭐"
-        echo -e " ${GREEN}[11]${NC} V2Ray Manager            ${GREEN}[12]${NC} Hysteria 2 Manager"
-        echo -e " ${GREEN}[13]${NC} Trojan-Go Manager        ${GREEN}[14]${NC} SlowDNS Manager"
-        echo -e " ${GREEN}[15]${NC} WebSocket + TLS          ${GREEN}[16]${NC} BBR + Otimizações"
-        echo -e " ${GREEN}[17]${NC} Firewall Manager         ${GREEN}[18]${NC} Monitoramento"
-        echo -e " ${GREEN}[19]${NC} Atualizar Script         ${GREEN}[20]${NC} Backup Configs"
-        echo -e " ${RED}[21]${NC} Uninstall All             ${GREEN}[22]${NC} Server Settings"
-        echo -e " ──────────────────────────────────────────────────────────────"
-        echo -e " ${RED}[00]${NC} Sair"
-        echo ""
-        read -p " 🔹 ESCOLHA UMA OPÇÃO [00-22]: " option
-        
-        case $option in
-            01|1) create_ssh_user ;; 02|2) remove_ssh_user ;; 03|3) list_ssh_users ;; 04|4) show_online_users ;;
-            05|5) limit_connections ;; 06|6) set_expiry ;; 07|7) manage_badvpn ;; 08|8) manage_squid ;;
-            09|9) manage_openvpn ;; 10) manage_xray ;; 11) manage_v2ray ;; 12) manage_hysteria ;;
-            13) manage_trojan_go ;; 14) manage_slowdns ;; 15) manage_wstls ;; 16) manage_bbr ;;
-            17) manage_firewall_menu ;; 18) manage_monitoring ;; 19) update_script ;; 20) backup_configs ;;
-            21) uninstall_all ;; 22) server_settings ;; 00|0) exit 0 ;;
-            *) echo -e "${RED}Opção inválida!${NC}"; sleep 1 ;;
+        echo -e "${CYAN}--- GERENCIAMENTO XRAY (Manual) ---${NC}"
+        echo -e " [1] Reiniciar | [2] Mudar Porta | [3] Mudar SNI | [4] Mudar Host | [5] Desinstalar | [0] Voltar"
+        read -p " Opção: " sub
+        case $sub in
+            1) systemctl restart xray ; echo "Reiniciado!" ; sleep 1 ;;
+            2) read -p "Porta: " p ; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json ; systemctl restart xray ;;
+            3) read -p "SNI: " s ; sed -i "s/serverNames\": \[\".*\"\]/serverNames\": \[\"$s\"\]/" /etc/xray/config.json ; systemctl restart xray ;;
+            4) read -p "Host/IP: " h ; sed -i "s/dest\": \".*\"/dest\": \"$h\"/" /etc/xray/config.json ; systemctl restart xray ;;
+            5) apt purge xray -y ; echo "Removido!" ; sleep 1 ;;
+            0) break ;;
         esac
     done
 }
 
-# Iniciar o script
-show_menu
+# MENU PRINCIPAL
+while true; do
+    header
+    echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar"
+    echo -e " ${GREEN}[04]${NC} Usuários Online ${GREEN}[05]${NC} BadVPN         ${GREEN}[06]${NC} Squid Proxy"
+    echo -e " ${CYAN}[10]${NC} Xray Core ⚡    ${GREEN}[11]${NC} BBR Otimização  ${GREEN}[12]${NC} Firewall"
+    echo -e " ${RED}[00]${NC} Sair"
+    echo ""
+    read -p " 🔹 ESCOLHA: " opt
+    case $opt in
+        01|1) criar_usuario ;; 02|2) remover_usuario ;; 03|3) listar_usuarios ;;
+        04|4) monitorar_online ;; 05|5) gerir_badvpn ;; 06|6) gerir_squid ;;
+        10) submenu_xray ;; 11|11) gerir_bbr ;; 12|12) gerir_firewall ;;
+        00|0) exit 0 ;;
+        *) echo "Opção inválida!"; sleep 1 ;;
+    esac
+done
