@@ -20,26 +20,29 @@ criar_ssh() { header; read -p "Usuario: " u; read -p "Senha: " p; useradd -M -s 
 remover_ssh() { header; read -p "Usuario: " u; userdel -r "$u"; echo -e "${RED}Removido!${NC}"; read -p "Enter..."; }
 listar_ssh() { header; cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)'; read -p "Enter..."; }
 
+# FUNÇÃO SSH-PLUS (ADICIONADA)
+instalar_sshplus() {
+    header
+    echo -e "${YELLOW}Instalando SSH-PLUS-MANAGER...${NC}"
+    rm -f /usr/bin/menu /bin/menu /bin/Plus /root/Plus
+    wget -q https://raw.githubusercontent.com/jenbhie/SSH-PLUS-MANAGER/main/Plus -O /root/Plus
+    chmod 777 /root/Plus
+    echo -e "${GREEN}SSH-PLUS instalado com sucesso em /root/Plus${NC}"
+    read -p "Enter para voltar..."
+}
+
 # SUB-MENU XRAY
 submenu_xray() {
     while true; do
         header
         echo -e "${CYAN}--- GERENCIAMENTO XRAY ---${NC}"
-        echo -e " [1] Reiniciar Xray"
-        echo -e " [2] Trocar Porta"
-        echo -e " [3] Trocar SNI"
-        echo -e " [4] Trocar Host/CDN"
-        echo -e " [5] Desinstalar Xray"
-        echo -e " [0] Voltar"
+        echo -e " [1] Reiniciar | [2] Trocar Porta | [3] Trocar SNI | [0] Voltar"
         read -p " Opção: " sub
         case $sub in
             1) systemctl restart xray; echo "Reiniciado!"; sleep 1 ;;
             2) read -p "Porta: " p; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
             3) read -p "SNI: " s; sed -i "s/serverNames\": \[\".*\"\]/serverNames\": \[\"$s\"\]/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
-            4) read -p "Host: " h; sed -i "s/dest\": \".*\"/dest\": \"$h\"/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
-            5) apt purge xray -y; echo "Desinstalado!"; sleep 1 ;;
             0) break ;;
-            *) echo "Inválido"; sleep 1 ;;
         esac
     done
 }
@@ -48,7 +51,8 @@ submenu_xray() {
 while true; do
     header
     echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar"
-    echo -e " ${CYAN}[10]${NC} Xray Core      ${RED}[00]${NC} Sair"
+    echo -e " ${CYAN}[10]${NC} Xray Core      ${GREEN}[19]${NC} Instalar SSH-PLUS"
+    echo -e " ${RED}[00]${NC} Sair"
     echo ""
     read -p " 🔹 ESCOLHA: " opt
     case $opt in
@@ -56,6 +60,7 @@ while true; do
         02|2) remover_ssh ;;
         03|3) listar_ssh ;;
         10) submenu_xray ;;
+        19) instalar_sshplus ;;
         00|0) exit 0 ;;
         *) echo "Inválido"; sleep 1 ;;
     esac
