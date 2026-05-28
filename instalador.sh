@@ -15,28 +15,44 @@ header() {
     echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
 }
 
-# FUNÇÕES INTEGRADAS
-criar_usuario() { header; read -p "Usuario: " u; read -p "Senha: " p; useradd -M -s /usr/sbin/nologin "$u" && echo "$u:$p" | chpasswd; echo -e "${GREEN}Criado!${NC}"; read; }
-remover_usuario() { header; read -p "Usuario: " u; userdel -r "$u"; echo -e "${RED}Removido!${NC}"; read; }
-listar_usuarios() { header; cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)'; read; }
-monitorar_online() { header; who; read; }
-gerir_badvpn() { header; echo "1) Iniciar BadVPN (7300) 0) Voltar"; read -p "Opção: " o; [[ $o == 1 ]] && nohup badvpn-udpgw --listen-addr 127.0.0.1:7300 > /dev/null 2>&1 &; read; }
-gerir_squid() { header; apt install squid -y; echo "http_port 3128" > /etc/squid/squid.conf; systemctl restart squid; echo "Squid Ativo na 3128"; read; }
-gerir_bbr() { header; echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf; echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf; sysctl -p; echo "BBR Ativo!"; read; }
-gerir_firewall() { header; ufw allow 22/tcp; ufw allow 80/tcp; ufw allow 443/tcp; echo "Regras aplicadas!"; read; }
+criar_ssh() {
+    header
+    read -p "Usuario: " u
+    read -p "Senha: " p
+    useradd -M -s /usr/sbin/nologin "$u" && echo "$u:$p" | chpasswd
+    echo -e "${GREEN}Usuário criado com sucesso!${NC}"
+    read -p "Enter para voltar..."
+}
+
+remover_ssh() {
+    header
+    read -p "Usuario a remover: " u
+    userdel -r "$u"
+    echo -e "${RED}Usuário removido!${NC}"
+    read -p "Enter para voltar..."
+}
+
+listar_ssh() {
+    header
+    cat /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)' | cut -d: -f1
+    read -p "Enter para voltar..."
+}
+
 submenu_xray() {
     while true; do
         header
         echo -e "${CYAN}--- GERENCIAMENTO XRAY (Manual) ---${NC}"
-        echo -e " [1] Reiniciar | [2] Mudar Porta | [3] Mudar SNI | [4] Mudar Host | [5] Desinstalar | [0] Voltar"
+        echo -e " [1] Reiniciar Xray"
+        echo -e " [2] Mudar Porta"
+        echo -e " [3] Mudar SNI"
+        echo -e " [4] Mudar Host/IP"
+        echo -e " [0] Voltar"
         read -p " Opção: " sub
         case $sub in
-            1) systemctl restart xray ; echo "Reiniciado!" ; sleep 1 ;;
-            2) read -p "Porta: " p ; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json ; systemctl restart xray ;;
-            3) read -p "SNI: " s ; sed -i "s/serverNames\": \[\".*\"\]/serverNames\": \[\"$s\"\]/" /etc/xray/config.json ; systemctl restart xray ;;
-            4) read -p "Host/IP: " h ; sed -i "s/dest\": \".*\"/dest\": \"$h\"/" /etc/xray/config.json ; systemctl restart xray ;;
-            5) apt purge xray -y ; echo "Removido!" ; sleep 1 ;;
+            1) systemctl restart xray; echo "Xray Reiniciado!"; sleep 1 ;;
+            2) read -p "Nova porta: " p; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json; systemctl restart xray; echo "Porta alterada!"; sleep 1 ;;
             0) break ;;
+            *) echo "Opção inválida!"; sleep 1 ;;
         esac
     done
 }
@@ -44,17 +60,16 @@ submenu_xray() {
 # MENU PRINCIPAL
 while true; do
     header
-    echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar"
-    echo -e " ${GREEN}[04]${NC} Usuários Online ${GREEN}[05]${NC} BadVPN         ${GREEN}[06]${NC} Squid Proxy"
-    echo -e " ${CYAN}[10]${NC} Xray Core ⚡    ${GREEN}[11]${NC} BBR Otimização  ${GREEN}[12]${NC} Firewall"
-    echo -e " ${RED}[00]${NC} Sair"
+    echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar SSH"
+    echo -e " ${CYAN}[10]${NC} Xray Core ⚡    ${RED}[00]${NC} Sair"
     echo ""
-    read -p " 🔹 ESCOLHA: " opt
+    read -p " 🔹 ESCOLHA UMA OPÇÃO: " opt
     case $opt in
-        01|1) criar_usuario ;; 02|2) remover_usuario ;; 03|3) listar_usuarios ;;
-        04|4) monitorar_online ;; 05|5) gerir_badvpn ;; 06|6) gerir_squid ;;
-        10) submenu_xray ;; 11|11) gerir_bbr ;; 12|12) gerir_firewall ;;
+        01|1) criar_ssh ;;
+        02|2) remover_ssh ;;
+        03|3) listar_ssh ;;
+        10) submenu_xray ;;
         00|0) exit 0 ;;
-        *) echo "Opção inválida!"; sleep 1 ;;
+        *) echo "Opção inválida"; sleep 1 ;;
     esac
 done
