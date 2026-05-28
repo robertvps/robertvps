@@ -24,7 +24,7 @@ done
 EOF
 chmod +x /root/xray_manager.sh
 
-# 2. CRIAR O NOVO MENU PRINCIPAL (Substitui o menu com erro)
+# 2. CRIAR O MENU CENTRAL (Ajustado para abrir o Plus corretamente)
 cat << 'EOF' > /bin/menu
 #!/bin/bash
 while true; do
@@ -38,7 +38,7 @@ while true; do
     echo -e "\033[1;31m════════════════════════════════════════════════════\033[0m"
     read -p "ESCOLHA UMA OPÇÃO: " opt
     case $opt in
-        01|1) /root/Plus ;;
+        01|1) ./Plus ;;
         20) /root/xray_manager.sh ;;
         00|0) exit 0 ;;
         *) echo "Opção inválida!"; sleep 1 ;;
@@ -47,5 +47,5 @@ done
 EOF
 chmod +x /bin/menu
 
-echo -e "\033[1;32mINSTALAÇÃO/ATUALIZAÇÃO CONCLUÍDA!\033[0m"
+echo -e "\033[1;32mINSTALAÇÃO FINALIZADA COM SUCESSO!\033[0m"
 echo -e "\033[1;33mDIGITE 'menu' PARA ACESSAR.\033[0m"
