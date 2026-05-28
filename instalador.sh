@@ -15,44 +15,31 @@ header() {
     echo -e "${BLUE}┴────────────────────────────────────────────────────────────────────────┴${NC}"
 }
 
-criar_ssh() {
-    header
-    read -p "Usuario: " u
-    read -p "Senha: " p
-    useradd -M -s /usr/sbin/nologin "$u" && echo "$u:$p" | chpasswd
-    echo -e "${GREEN}Usuário criado com sucesso!${NC}"
-    read -p "Enter para voltar..."
-}
+# FUNÇÕES
+criar_ssh() { header; read -p "Usuario: " u; read -p "Senha: " p; useradd -M -s /usr/sbin/nologin "$u" && echo "$u:$p" | chpasswd; echo -e "${GREEN}Sucesso!${NC}"; read -p "Enter..."; }
+remover_ssh() { header; read -p "Usuario: " u; userdel -r "$u"; echo -e "${RED}Removido!${NC}"; read -p "Enter..."; }
+listar_ssh() { header; cut -d: -f1 /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)'; read -p "Enter..."; }
 
-remover_ssh() {
-    header
-    read -p "Usuario a remover: " u
-    userdel -r "$u"
-    echo -e "${RED}Usuário removido!${NC}"
-    read -p "Enter para voltar..."
-}
-
-listar_ssh() {
-    header
-    cat /etc/passwd | grep -vE '^(root|nobody|syslog|www-data)' | cut -d: -f1
-    read -p "Enter para voltar..."
-}
-
+# SUB-MENU XRAY
 submenu_xray() {
     while true; do
         header
-        echo -e "${CYAN}--- GERENCIAMENTO XRAY (Manual) ---${NC}"
+        echo -e "${CYAN}--- GERENCIAMENTO XRAY ---${NC}"
         echo -e " [1] Reiniciar Xray"
-        echo -e " [2] Mudar Porta"
-        echo -e " [3] Mudar SNI"
-        echo -e " [4] Mudar Host/IP"
+        echo -e " [2] Trocar Porta"
+        echo -e " [3] Trocar SNI"
+        echo -e " [4] Trocar Host/CDN"
+        echo -e " [5] Desinstalar Xray"
         echo -e " [0] Voltar"
         read -p " Opção: " sub
         case $sub in
-            1) systemctl restart xray; echo "Xray Reiniciado!"; sleep 1 ;;
-            2) read -p "Nova porta: " p; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json; systemctl restart xray; echo "Porta alterada!"; sleep 1 ;;
+            1) systemctl restart xray; echo "Reiniciado!"; sleep 1 ;;
+            2) read -p "Porta: " p; sed -i "s/\"port\": [0-9]*/\"port\": $p/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
+            3) read -p "SNI: " s; sed -i "s/serverNames\": \[\".*\"\]/serverNames\": \[\"$s\"\]/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
+            4) read -p "Host: " h; sed -i "s/dest\": \".*\"/dest\": \"$h\"/" /etc/xray/config.json; systemctl restart xray; echo "OK!"; sleep 1 ;;
+            5) apt purge xray -y; echo "Desinstalado!"; sleep 1 ;;
             0) break ;;
-            *) echo "Opção inválida!"; sleep 1 ;;
+            *) echo "Inválido"; sleep 1 ;;
         esac
     done
 }
@@ -60,16 +47,16 @@ submenu_xray() {
 # MENU PRINCIPAL
 while true; do
     header
-    echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar SSH"
-    echo -e " ${CYAN}[10]${NC} Xray Core ⚡    ${RED}[00]${NC} Sair"
+    echo -e " ${GREEN}[01]${NC} Criar SSH      ${GREEN}[02]${NC} Remover SSH    ${GREEN}[03]${NC} Listar"
+    echo -e " ${CYAN}[10]${NC} Xray Core      ${RED}[00]${NC} Sair"
     echo ""
-    read -p " 🔹 ESCOLHA UMA OPÇÃO: " opt
+    read -p " 🔹 ESCOLHA: " opt
     case $opt in
         01|1) criar_ssh ;;
         02|2) remover_ssh ;;
         03|3) listar_ssh ;;
         10) submenu_xray ;;
         00|0) exit 0 ;;
-        *) echo "Opção inválida"; sleep 1 ;;
+        *) echo "Inválido"; sleep 1 ;;
     esac
 done
