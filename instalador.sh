@@ -2,7 +2,7 @@
 
 # --- CONFIGURAÇÃO DO PAINEL ---
 NOME_PAINEL="ALIEN VPN SSH HIPER"
-CONTATO="@SEU_TELEGRAM" # Altere para o seu usuário
+CONTATO="@alienvps" # Altere para o seu usuário
 
 clear
 echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
